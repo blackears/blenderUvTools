@@ -28,11 +28,19 @@ batchLine = batch_for_shader(shader, 'LINES', {"pos": coordsNormal})
 batchCircle = batch_for_shader(shader, 'LINE_STRIP', {"pos": coordsCircle})
 
 
-def ray_cast(context, viewlayer, ray_origin, view_vector):
-    if bpy.app.version >= (2, 91, 0):
-        return context.scene.ray_cast(viewlayer.depsgraph, ray_origin, view_vector)
+def ray_cast(context, viewlayer, ray_origin, view_vector, object = None):
+    if object == None:
+        if bpy.app.version >= (2, 91, 0):
+            return context.scene.ray_cast(viewlayer.depsgraph, ray_origin, view_vector)
+        else:
+            return context.scene.ray_cast(viewlayer, ray_origin, view_vector)
     else:
-        return context.scene.ray_cast(viewlayer, ray_origin, view_vector)
+        if bpy.app.version >= (2, 91, 0):
+            result, location, normal, index = object.ray_cast(viewlayer.depsgraph, ray_origin, view_vector)
+            return (result, location, normal, index, object)
+        else:
+            result, location, normal, index = object.ray_cast(viewlayer, ray_origin, view_vector)
+            return (result, location, normal, index, object)
 
 
 def redraw_all_viewports(context):
@@ -135,6 +143,8 @@ class SimpleOperator(bpy.types.Operator):
         
         self.cursor_pos = None
         self.show_cursor = False
+        self.edit_object = None
+        self.stroke_trail = []
         
         self.history = []
         self.history_idx = -1
@@ -231,6 +241,32 @@ class SimpleOperator(bpy.types.Operator):
                 
         self.history = []
         self.history_idx = -1
+
+
+    def dab_brush(self, context, event):
+        mouse_pos = (event.mouse_region_x, event.mouse_region_y)
+        
+        targetObj = context.scene.normal_brush_props.target
+
+        ctx = bpy.context
+
+        region = context.region
+        rv3d = context.region_data
+
+        view_vector = view3d_utils.region_2d_to_vector_3d(region, rv3d, mouse_pos)
+        ray_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, mouse_pos)
+
+        viewlayer = bpy.context.view_layer
+        result, location, normal, face_index, object, matrix = ray_cast(context, viewlayer, ray_origin, view_vector, self.edit_object)
+        
+        center = None
+        center_count = 0
+        
+        if result:
+            self.stroke_trail.append(location)
+            
+        else:
+            self.stroke_trail = []
         
     def mouse_move(self, context, event):
         mouse_pos = (event.mouse_region_x, event.mouse_region_y)
@@ -257,11 +293,11 @@ class SimpleOperator(bpy.types.Operator):
             self.show_cursor = False
 
         if self.dragging:
-#            self.dab_brush(context, event)
+            self.dab_brush(context, event)
             pass
 
 
-    def mouse_down(self, context, event):
+    def mouse_click(self, context, event):
         if event.value == "PRESS":
             
             mouse_pos = (event.mouse_region_x, event.mouse_region_y)
@@ -280,10 +316,14 @@ class SimpleOperator(bpy.types.Operator):
             self.dragging = True
             self.stroke_trail = []
             
-#            self.dab_brush(context, event)
+            self.dab_brush(context, event)
+            
+            self.edit_object = object
             
         elif event.value == "RELEASE":
             self.dragging = False
+            self.edit_object = None
+            
 #            self.history_snapshot(context)
 
 
@@ -316,7 +356,7 @@ class SimpleOperator(bpy.types.Operator):
 #            print("  pos %s" % str(mouse_pos))
             
 #            return {'RUNNING_MODAL'}
-            return self.mouse_down(context, event)
+            return self.mouse_click(context, event)
 
         elif event.type == 'RIGHTMOUSE':
             mouse_pos = (event.mouse_region_x, event.mouse_region_y)
@@ -402,7 +442,7 @@ def register():
 
 def unregister():
     bpy.utils.unregister_class(SimpleOperator)
-    bpy.utils.unregister_tool(MyTool, after={"builtin.scale_cage"}, separator=True, group=True)
+    bpy.utils.unregister_tool(MyTool)
 
     
     #Unload icons
