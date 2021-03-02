@@ -27,20 +27,45 @@ shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
 batchLine = batch_for_shader(shader, 'LINES', {"pos": coordsNormal})
 batchCircle = batch_for_shader(shader, 'LINE_STRIP', {"pos": coordsCircle})
 
+#--------------------------------------
+
+class UvBrushToolSettings(bpy.types.PropertyGroup):
+    
+    radius : bpy.props.FloatProperty(
+        name="Radius", description="Radius of brush", default = 1, min=0, soft_max = 4
+    )
+
+    strength : bpy.props.FloatProperty(
+        name="Strength", description="Strength of brush", default = 1, min=0, soft_max = 4
+    )
+
+
+#--------------------------------------
+
+def project_point_onto_plane(point, plane_pt, plane_norm):
+    proj = (point - plane_pt).project(plane_norm)
+    return point - proj
+
+#return vector of coefficients [a, b, c] such that vec = a * v0 + b * v1 + c * v2
+def express_in_basis(vec, v0, v1, v2):
+    v = mathutils.Matrix((v0, v1, v2)) #row order
+    if v.determinant() == 0:
+        return mathutils.Vector((0, 0, 0))
+        
+#    print("coeffMtx v %s" % (str(v)))
+    vI = v.copy()
+    vI.transpose()
+#    print("vI Mtx %s" % (str(vI)))
+    vI.invert()
+#    print("vI Mtx %s" % (str(vI)))
+    return vI @ vec
+
 
 def ray_cast(context, viewlayer, ray_origin, view_vector, object = None):
-    if object == None:
-        if bpy.app.version >= (2, 91, 0):
-            return context.scene.ray_cast(viewlayer.depsgraph, ray_origin, view_vector)
-        else:
-            return context.scene.ray_cast(viewlayer, ray_origin, view_vector)
+    if bpy.app.version >= (2, 91, 0):
+        return context.scene.ray_cast(viewlayer.depsgraph, ray_origin, view_vector)
     else:
-        if bpy.app.version >= (2, 91, 0):
-            result, location, normal, index = object.ray_cast(viewlayer.depsgraph, ray_origin, view_vector)
-            return (result, location, normal, index, object)
-        else:
-            result, location, normal, index = object.ray_cast(viewlayer, ray_origin, view_vector)
-            return (result, location, normal, index, object)
+        return context.scene.ray_cast(viewlayer, ray_origin, view_vector)
 
 
 def redraw_all_viewports(context):
@@ -106,7 +131,7 @@ def draw_callback(self, context):
 
     #Draw cursor
     if self.show_cursor:
-        brush_radius = context.scene.normal_brush_props.radius
+        brush_radius = context.scene.uv_brush_props.radius
     
         m = calc_vertex_transform_world(self.cursor_pos, self.cursor_normal);
         mS = mathutils.Matrix.Scale(brush_radius, 4)
@@ -123,9 +148,6 @@ def draw_callback(self, context):
         gpu.matrix.pop()
 
 
-        #Brush normal direction
-        brush_type = context.scene.normal_brush_props.brush_type
-        brush_normal = context.scene.normal_brush_props.normal
         
 
     bgl.glDisable(bgl.GL_DEPTH_TEST)
@@ -137,6 +159,7 @@ class SimpleOperator(bpy.types.Operator):
     """Tooltip"""
     bl_idname = "object.simple_operator"
     bl_label = "Simple Object Operator"
+    bl_options = {"REGISTER", "UNDO"}
 
     def __init__(self):
         self.dragging = False
@@ -164,14 +187,14 @@ class SimpleOperator(bpy.types.Operator):
     #if bookmark is other than -1, snapshot added to bookmark library rather than undo stack
     def history_snapshot(self, context, bookmark = -1):
         map = {}
-        for obj in context.selected_objects:
-            if obj.type == 'MESH':
+        if self.edit_object != None:
+            if self.edit_object == 'MESH':
                 bm = bmesh.new()
                 
                 mesh = obj.data
                 bm.from_mesh(mesh)
                 map[obj] = bm
-                
+        
         if bookmark != -1:
             self.history_bookmarks[bookmark] = map
                 
@@ -211,6 +234,7 @@ class SimpleOperator(bpy.types.Operator):
             if obj.type == 'MESH':
                 bm = map[obj]
                 
+                #self.edit_object
                 mesh = obj.data
                 bm.to_mesh(mesh)
                 mesh.update()
@@ -246,10 +270,6 @@ class SimpleOperator(bpy.types.Operator):
     def dab_brush(self, context, event):
         mouse_pos = (event.mouse_region_x, event.mouse_region_y)
         
-        targetObj = context.scene.normal_brush_props.target
-
-        ctx = bpy.context
-
         region = context.region
         rv3d = context.region_data
 
@@ -257,12 +277,96 @@ class SimpleOperator(bpy.types.Operator):
         ray_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, mouse_pos)
 
         viewlayer = bpy.context.view_layer
-        result, location, normal, face_index, object, matrix = ray_cast(context, viewlayer, ray_origin, view_vector, self.edit_object)
+        
+        hit_object = None
+        location = None
+        normal = None
+        index = None
+        
+        if self.edit_object == None:
+            hit_object, location, normal, face_index, object, matrix = ray_cast(context, viewlayer, ray_origin, view_vector, self.edit_object)
+        else:
+            hit_object, location, normal, index = self.edit_object.ray_cast(ray_origin, view_vector)
+            object = self.edit_object
+            
+        print("hit obj:%s" % (str(hit_object)))
         
         center = None
         center_count = 0
+
+        brush_radius = context.scene.uv_brush_props.radius
+        strength = context.scene.uv_brush_props.strength
         
-        if result:
+        if hit_object and len(self.stroke_trail) > 0:
+            
+            print("--------Edit object uvs") 
+            
+            mesh = object.data
+#            mesh.polygons[face_index]
+            uvLayer = mesh.uv_layers.active.data
+            
+            for p in mesh.polygons:
+                v0pos = mathutils.Vector(mesh.vertices[p.vertices[0]].co)
+                v1pos = mathutils.Vector(mesh.vertices[p.vertices[1]].co)
+                v2pos = mathutils.Vector(mesh.vertices[p.vertices[2]].co)
+                
+                print("v0pos: %s  v1pos: %s  v2pos: %s  " % (str(v0pos), str(v1pos), str(v2pos)))
+
+                v1 = v1pos - v0pos
+                v2 = v2pos - v0pos
+
+                print("v1: %s  v2: %s  norm: %s  " % (str(v1), str(v2), str(p.normal)))
+
+                dragP0 = project_point_onto_plane(self.stroke_trail[-1], v0pos, p.normal)
+                dragP1 = project_point_onto_plane(location, v0pos, p.normal)
+
+                print("dragP0: %s  dragP1: %s" % (str(dragP0), str(dragP1)))
+
+                # l0 = mesh.loops[p.loop_indices[0]]
+                # l1 = mesh.loops[p.loop_indices[0]]
+                # l2 = mesh.loops[p.loop_indices[0]]
+                uv0 = uvLayer[p.loop_indices[0]].uv
+                uv1 = uvLayer[p.loop_indices[1]].uv
+                uv2 = uvLayer[p.loop_indices[2]].uv
+
+                print("uv0: %s  uv1: %s  uv2: %s" % (str(uv0), str(uv1), str(uv2)))
+                
+            
+                locCo0 = express_in_basis(dragP0 - v0pos, v1, v2, p.normal)
+                locCo1 = express_in_basis(dragP1 - v0pos, v1, v2, p.normal)
+
+                print("locCo0: %s  locCo1: %s" % (str(locCo0), str(locCo1)))
+            
+                dragUv0 = (uv1 - uv0) * locCo0.x + (uv2 - uv0) * locCo0.y + uv0
+                dragUv1 = (uv1 - uv0) * locCo1.x + (uv2 - uv0) * locCo1.y + uv0
+                dUv = dragUv1 - dragUv0
+
+                print("dragUv0: %s  dragUv1: %s  dUv: %s" % (str(dragUv0), str(dragUv1), str(dUv)))
+
+                # dist0 = (v0pos - location).magnitude
+                # dist1 = (v1pos - location).magnitude
+                # dist2 = (v2pos - location).magnitude
+            
+#                if dist0 < brush_radius:
+                    
+            
+                print("loop total:%d" % (p.loop_total))
+            
+                for loop_idx in p.loop_indices:
+                    
+                    loop = mesh.loops[loop_idx]
+                    pos = mathutils.Vector(mesh.vertices[loop.vertex_index].co)
+                    dist = (pos - location).magnitude
+                    if dist < brush_radius:
+                        atten = dist / brush_radius
+                        uvLayer[loop_idx].uv -= atten * dUv
+                 
+                    # uv = uv_layer[l.index].uv
+                
+                
+            
+        
+        if hit_object:        
             self.stroke_trail.append(location)
             
         else:
@@ -310,15 +414,19 @@ class SimpleOperator(bpy.types.Operator):
             viewlayer = bpy.context.view_layer
             result, location, normal, index, object, matrix = ray_cast(context, viewlayer, ray_origin, view_vector)
 
-            if result == False or object.select_get() == False:
+            if result == False or object.select_get() == False or object.type != 'MESH':
                 return {'PASS_THROUGH'}
                             
             self.dragging = True
             self.stroke_trail = []
             
+            self.edit_object = object
+            
             self.dab_brush(context, event)
             
-            self.edit_object = object
+            
+            # self.init_mesh = bmesh.new()
+            # self.init_mesh.copyFrom(object)
             
         elif event.value == "RELEASE":
             self.dragging = False
@@ -340,6 +448,24 @@ class SimpleOperator(bpy.types.Operator):
         if event.type in {'MIDDLEMOUSE', 'WHEELUPMOUSE', 'WHEELDOWNMOUSE'}:
             # allow navigation
             return {'PASS_THROUGH'}
+
+        # elif event.type in {'Z'}:
+            # # allow navigation
+            # if event.value == 'PRESS':
+                # v1 = mathutils.Vector((2, 0, 0))
+                # v2 = mathutils.Vector((2, 2, 0))
+                # n = mathutils.Vector((0, 0, 1))
+                # p = mathutils.Vector((-.924, .8901, 0))
+                
+                # c = express_in_basis(p, v1, v2, n)
+                # comb = c.x * v1 + c.y * v2 + c.z * n
+                
+                # print("v1 %s  v2 %s  n %s" % (str(v1), str(v2), str(n)))
+                # print("p %s" % (str(p)))
+                # print("c %s" % (str(c)))
+                # print("combine %s" % (str(comb)))
+                
+            # return {'RUNNING_MODAL'}
         
         elif event.type == 'MOUSEMOVE':
             self.mouse_move(context, event)
@@ -412,9 +538,10 @@ class MyTool(bpy.types.WorkSpaceTool):
 #        pcol = preview_collections["main"]
 #        self.bl_icon = pcol["uvBrush"].icon_id
     
-        props = tool.operator_properties("view3d.select_circle")
-        layout.prop(props, "mode")
+        props = context.scene.uv_brush_props
+#        props = tool.operator_properties("view3d.select_circle")
         layout.prop(props, "radius")
+        layout.prop(props, "strength")
 
 #---------------------------
 
@@ -436,11 +563,14 @@ def register():
     preview_collections["main"] = pcoll
 
     #Register tools
+    bpy.utils.register_class(UvBrushToolSettings)
     bpy.utils.register_class(SimpleOperator)
     bpy.utils.register_tool(MyTool, after={"builtin.scale_cage"}, separator=True, group=True)
 
+    bpy.types.Scene.uv_brush_props = bpy.props.PointerProperty(type=UvBrushToolSettings)
 
 def unregister():
+    bpy.utils.unregister_class(UvBrushToolSettings)
     bpy.utils.unregister_class(SimpleOperator)
     bpy.utils.unregister_tool(MyTool)
 
