@@ -40,6 +40,9 @@ class UvBrushToolSettings(bpy.types.PropertyGroup):
         name="Strength", description="Strength of brush", default = 1, min=0, soft_max = 4
     )
 
+    use_pressure : bpy.props.BoolProperty(
+        name="Pen Pressure", description="If true, pen pressure is used to adjust strength", default = False
+    )
 
 #--------------------------------------
 
@@ -343,6 +346,7 @@ class SimpleOperator(bpy.types.Operator):
 
         brush_radius = context.scene.uv_brush_props.radius
         strength = context.scene.uv_brush_props.strength
+        use_pressure = context.scene.uv_brush_props.use_pressure
         
         if hit_object and len(self.stroke_trail) > 0:
             
@@ -402,6 +406,8 @@ class SimpleOperator(bpy.types.Operator):
                     dist = (pos - location).magnitude
                     if dist < brush_radius:
                         atten = 1 - dist / brush_radius
+                        if use_pressure:
+                            atten *= event.pressure
 #                        offset = -atten * dUv
 #                        uvLayer[loop_idx].uv -= atten * dUv
                         vert_trackers[loop.vertex_index].considerUv(uvLayer[loop_idx].uv.copy(), dist, uvLayer[loop_idx].uv - atten * dUv)
@@ -502,7 +508,7 @@ class SimpleOperator(bpy.types.Operator):
         return context.active_object is not None
 
     def modal(self, context, event):
-        print("modal evTyp:%s evVal:%s" % (str(event.type), str(event.value)))
+#        print("modal evTyp:%s evVal:%s" % (str(event.type), str(event.value)))
         context.area.tag_redraw()
 
         if event.type in {'MIDDLEMOUSE', 'WHEELUPMOUSE', 'WHEELDOWNMOUSE'}:
@@ -560,7 +566,7 @@ class SimpleOperator(bpy.types.Operator):
 #        return {'FINISHED'}
 
     def invoke(self, context, event):
-        print("invoke evTyp:%s evVal:%s" % (str(event.type), str(event.value)))
+#        print("invoke evTyp:%s evVal:%s" % (str(event.type), str(event.value)))
         context.window_manager.modal_handler_add(self)
 
         args = (self, context)
@@ -602,6 +608,7 @@ class MyTool(bpy.types.WorkSpaceTool):
 #        props = tool.operator_properties("view3d.select_circle")
         layout.prop(props, "radius")
         layout.prop(props, "strength")
+        layout.prop(props, "use_pressure")
 
 #---------------------------
 
