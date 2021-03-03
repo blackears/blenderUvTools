@@ -13,7 +13,7 @@ from gpu_extras.batch import batch_for_shader
 from bpy_extras import view3d_utils
 
 
-preview_collections = {}
+#preview_collections = {}
 
 
 circleSegs = 64
@@ -205,9 +205,9 @@ class VertexTracker:
     
 #-------------------------------------
 
-class SimpleOperator(bpy.types.Operator):
+class UvBrushToolOperator(bpy.types.Operator):
     """Tooltip"""
-    bl_idname = "object.simple_operator"
+    bl_idname = "kitfox.uv_brush_operator"
     bl_label = "Simple Object Operator"
     bl_options = {"REGISTER", "UNDO"}
 
@@ -224,10 +224,11 @@ class SimpleOperator(bpy.types.Operator):
         self.history_limit = 10
         self.history_bookmarks = {}
         
-        print("construct SimpleOperator")
+#        print("construct UvBrushToolOperator")
 
     def __del__(self):
-        print("destruct SimpleOperator")
+#        print("destruct UvBrushToolOperator")
+        pass
         
     def free_snapshot(self, map):
         for obj in map:
@@ -633,35 +634,35 @@ class SimpleOperator(bpy.types.Operator):
 #-------------------------------------
 
 
-class MyTool(bpy.types.WorkSpaceTool):
-    bl_space_type = 'VIEW_3D'
-    bl_context_mode = 'OBJECT'
+# class MyTool(bpy.types.WorkSpaceTool):
+    # bl_space_type = 'VIEW_3D'
+    # bl_context_mode = 'OBJECT'
 
-    # The prefix of the idname should be your add-on name.
-    bl_idname = "kitfox.uvBrush"
-    bl_label = "Uv Brush"
-    bl_description = (
-        "This is a tooltip\n"
-        "with multiple lines"
-    )
+    # # The prefix of the idname should be your add-on name.
+    # bl_idname = "kitfox.uvBrush"
+    # bl_label = "Uv Brush"
+    # bl_description = (
+        # "This is a tooltip\n"
+        # "with multiple lines"
+    # )
     
-#    bl_icon = preview_collections["main"]["uvBrush"].icon_id
-    bl_icon = "ops.generic.select_circle"
-    bl_widget = None
-    bl_keymap = (
-        ("object.simple_operator", {"type": 'LEFTMOUSE', "value": 'PRESS'},
-         {"properties": []}),
-    )
+# #    bl_icon = preview_collections["main"]["uvBrush"].icon_id
+    # bl_icon = "ops.generic.select_circle"
+    # bl_widget = None
+    # bl_keymap = (
+        # ("object.simple_operator", {"type": 'LEFTMOUSE', "value": 'PRESS'},
+         # {"properties": []}),
+    # )
 
-    def draw_settings(context, layout, tool):
-#        pcol = preview_collections["main"]
-#        self.bl_icon = pcol["uvBrush"].icon_id
+    # def draw_settings(context, layout, tool):
+# #        pcol = preview_collections["main"]
+# #        self.bl_icon = pcol["uvBrush"].icon_id
     
-        props = context.scene.uv_brush_props
-#        props = tool.operator_properties("view3d.select_circle")
-        layout.prop(props, "radius")
-        layout.prop(props, "strength")
-        layout.prop(props, "use_pressure")
+        # props = context.scene.uv_brush_props
+# #        props = tool.operator_properties("view3d.select_circle")
+        # layout.prop(props, "radius")
+        # layout.prop(props, "strength")
+        # layout.prop(props, "use_pressure")
 
 #---------------------------
 
@@ -670,35 +671,35 @@ class MyTool(bpy.types.WorkSpaceTool):
 def register():
     
     #Load icons
-    icon_path = "../icons"
-    if __name__ == "__main__":
-        icon_path = "../../source/icons"
+    # icon_path = "../icons"
+    # if __name__ == "__main__":
+        # icon_path = "../../source/icons"
         
-    icons_dir = os.path.join(os.path.dirname(__file__), icon_path)
+    # icons_dir = os.path.join(os.path.dirname(__file__), icon_path)
     
-#    print("icons dir: " + str(icons_dir))
+# #    print("icons dir: " + str(icons_dir))
     
-    pcoll = bpy.utils.previews.new()
-    pcoll.load("uvBrush", os.path.join(icons_dir, "uvBrush.png"), 'IMAGE')
-    preview_collections["main"] = pcoll
+    # pcoll = bpy.utils.previews.new()
+    # pcoll.load("uvBrush", os.path.join(icons_dir, "uvBrush.png"), 'IMAGE')
+    # preview_collections["main"] = pcoll
 
     #Register tools
     bpy.utils.register_class(UvBrushToolSettings)
-    bpy.utils.register_class(SimpleOperator)
-    bpy.utils.register_tool(MyTool, after={"builtin.scale_cage"}, separator=True, group=True)
+    bpy.utils.register_class(UvBrushToolOperator)
+#    bpy.utils.register_tool(MyTool, after={"builtin.scale_cage"}, separator=True, group=True)
 
     bpy.types.Scene.uv_brush_props = bpy.props.PointerProperty(type=UvBrushToolSettings)
 
 def unregister():
     bpy.utils.unregister_class(UvBrushToolSettings)
-    bpy.utils.unregister_class(SimpleOperator)
-    bpy.utils.unregister_tool(MyTool)
+    bpy.utils.unregister_class(UvBrushToolOperator)
+#    bpy.utils.unregister_tool(MyTool)
 
     
     #Unload icons
-    for pcoll in preview_collections.values():
-        bpy.utils.previews.remove(pcoll)
-    preview_collections.clear()
+    # for pcoll in preview_collections.values():
+        # bpy.utils.previews.remove(pcoll)
+    # preview_collections.clear()
 
 if __name__ == "__main__":
     register()

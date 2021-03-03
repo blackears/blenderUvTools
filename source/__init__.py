@@ -35,13 +35,21 @@ if "bpy" in locals():
     else:
         from .operators import uvBrushTool
         
+    if "uvToolsPanel" in locals():
+        importlib.reload(uvToolsPanel)
+    else:
+        from .operators import uvToolsPanel
+        
 else:
     from .operators import uvBrushTool
+    from .operators import uvToolsPanel
 
 def register():
     uvBrushTool.register()
+    uvToolsPanel.register()
 
 
 def unregister():
     uvBrushTool.unregister()
+    uvToolsPanel.unregister()
 
