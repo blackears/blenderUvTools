@@ -7,6 +7,7 @@ import gpu
 import mathutils
 import math
 import bmesh
+#import pprint
 
 from gpu_extras.batch import batch_for_shader
 from bpy_extras import view3d_utils
@@ -152,6 +153,52 @@ def draw_callback(self, context):
 
     bgl.glDisable(bgl.GL_DEPTH_TEST)
 
+class UvTracker:
+    def __init__(self, uv, dist, newUv):
+        self.uv = uv
+        self.dist = dist
+        self.newUv = newUv
+        
+    def toString(self):
+        print("        uv %s  dist %s  newUv %s"  % (str(self.uv), str(self.dist), str(self.newUv)))
+    
+class VertexTracker:
+
+    def __init__(self, vert_index):
+        self.vert_index = vert_index
+        self.uvInfo = []
+        
+    def considerUv(self, uv_in, dist_in, newUv_in):
+#        print("Adding uv %s  dist %s  newUv %s" % (str(uv_in), str(dist_in), str(newUv_in)))
+    
+        for i in range(len(self.uvInfo)):
+            map = self.uvInfo[i]
+            
+            if map.uv == uv_in:
+#                print("found in map")
+                if map.dist > dist_in:
+#                    print("adding to map")
+                    map.dist = dist_in
+                    map.newUv = newUv_in
+                
+                return
+ 
+        map = UvTracker(uv_in, dist_in, newUv_in)
+        self.uvInfo.append(map)
+                    
+    def getNewUv(self, uv):
+#        print("Looking up uv %s  " % (str(uv)))
+        for map in self.uvInfo:
+#            print("Checking against uv %s  " % (str(map.uv)))
+            if map.uv == uv:
+#                print("Matched!")
+                return map.newUv
+         
+    def toString(self):
+        print("    vert_index %d"  % (self.vert_index))
+        for map in self.uvInfo:
+            map.toString()
+    
     
 #-------------------------------------
 
@@ -289,7 +336,7 @@ class SimpleOperator(bpy.types.Operator):
             hit_object, location, normal, index = self.edit_object.ray_cast(ray_origin, view_vector)
             object = self.edit_object
             
-        print("hit obj:%s" % (str(hit_object)))
+#        print("hit obj:%s" % (str(hit_object)))
         
         center = None
         center_count = 0
@@ -299,28 +346,30 @@ class SimpleOperator(bpy.types.Operator):
         
         if hit_object and len(self.stroke_trail) > 0:
             
-            print("--------Edit object uvs") 
+#            print("--------Edit object uvs") 
             
             mesh = object.data
 #            mesh.polygons[face_index]
             uvLayer = mesh.uv_layers.active.data
+            
+            vert_trackers = [VertexTracker(v.index) for v in mesh.vertices]
             
             for p in mesh.polygons:
                 v0pos = mathutils.Vector(mesh.vertices[p.vertices[0]].co)
                 v1pos = mathutils.Vector(mesh.vertices[p.vertices[1]].co)
                 v2pos = mathutils.Vector(mesh.vertices[p.vertices[2]].co)
                 
-                print("v0pos: %s  v1pos: %s  v2pos: %s  " % (str(v0pos), str(v1pos), str(v2pos)))
+#                print("v0pos: %s  v1pos: %s  v2pos: %s  " % (str(v0pos), str(v1pos), str(v2pos)))
 
                 v1 = v1pos - v0pos
                 v2 = v2pos - v0pos
 
-                print("v1: %s  v2: %s  norm: %s  " % (str(v1), str(v2), str(p.normal)))
+#                print("v1: %s  v2: %s  norm: %s  " % (str(v1), str(v2), str(p.normal)))
 
                 dragP0 = project_point_onto_plane(self.stroke_trail[-1], v0pos, p.normal)
                 dragP1 = project_point_onto_plane(location, v0pos, p.normal)
 
-                print("dragP0: %s  dragP1: %s" % (str(dragP0), str(dragP1)))
+#                print("dragP0: %s  dragP1: %s" % (str(dragP0), str(dragP1)))
 
                 # l0 = mesh.loops[p.loop_indices[0]]
                 # l1 = mesh.loops[p.loop_indices[0]]
@@ -329,28 +378,22 @@ class SimpleOperator(bpy.types.Operator):
                 uv1 = uvLayer[p.loop_indices[1]].uv
                 uv2 = uvLayer[p.loop_indices[2]].uv
 
-                print("uv0: %s  uv1: %s  uv2: %s" % (str(uv0), str(uv1), str(uv2)))
+#                print("uv0: %s  uv1: %s  uv2: %s" % (str(uv0), str(uv1), str(uv2)))
                 
             
                 locCo0 = express_in_basis(dragP0 - v0pos, v1, v2, p.normal)
                 locCo1 = express_in_basis(dragP1 - v0pos, v1, v2, p.normal)
 
-                print("locCo0: %s  locCo1: %s" % (str(locCo0), str(locCo1)))
+#                print("locCo0: %s  locCo1: %s" % (str(locCo0), str(locCo1)))
             
                 dragUv0 = (uv1 - uv0) * locCo0.x + (uv2 - uv0) * locCo0.y + uv0
                 dragUv1 = (uv1 - uv0) * locCo1.x + (uv2 - uv0) * locCo1.y + uv0
                 dUv = dragUv1 - dragUv0
 
-                print("dragUv0: %s  dragUv1: %s  dUv: %s" % (str(dragUv0), str(dragUv1), str(dUv)))
-
-                # dist0 = (v0pos - location).magnitude
-                # dist1 = (v1pos - location).magnitude
-                # dist2 = (v2pos - location).magnitude
-            
-#                if dist0 < brush_radius:
+#                print("dragUv0: %s  dragUv1: %s  dUv: %s" % (str(dragUv0), str(dragUv1), str(dUv)))
                     
             
-                print("loop total:%d" % (p.loop_total))
+#                print("loop total:%d" % (p.loop_total))
             
                 for loop_idx in p.loop_indices:
                     
@@ -358,13 +401,30 @@ class SimpleOperator(bpy.types.Operator):
                     pos = mathutils.Vector(mesh.vertices[loop.vertex_index].co)
                     dist = (pos - location).magnitude
                     if dist < brush_radius:
-                        atten = dist / brush_radius
-                        uvLayer[loop_idx].uv -= atten * dUv
-                 
-                    # uv = uv_layer[l.index].uv
-                
-                
+                        atten = 1 - dist / brush_radius
+#                        offset = -atten * dUv
+#                        uvLayer[loop_idx].uv -= atten * dUv
+                        vert_trackers[loop.vertex_index].considerUv(uvLayer[loop_idx].uv.copy(), dist, uvLayer[loop_idx].uv - atten * dUv)
+
+            #Write new uvs back to mesh
             
+            # pp = pprint.PrettyPrinter(indent=4)
+            # pp.pprint(vert_trackers)
+ #           print("vertTracker")
+#            for v in vert_trackers:
+#                print(v.toString())
+            
+            for p in mesh.polygons:
+                for loop_idx in p.loop_indices:
+                    loop = mesh.loops[loop_idx]
+#                    print("lookup vertidx %s  uv %s " % (str(loop.vertex_index), str(uvLayer[loop_idx].uv)))
+                    
+                    tracker = vert_trackers[loop.vertex_index]
+                    newUv = tracker.getNewUv(uvLayer[loop_idx].uv)
+                    if newUv != None:
+                        uvLayer[loop_idx].uv = newUv
+                    
+                
         
         if hit_object:        
             self.stroke_trail.append(location)
