@@ -237,14 +237,14 @@ class SimpleOperator(bpy.types.Operator):
     #if bookmark is other than -1, snapshot added to bookmark library rather than undo stack
     def history_snapshot(self, context, bookmark = -1):
         map = {}
-        if self.edit_object != None:
-            if self.edit_object == 'MESH':
+        for obj in context.selected_objects:
+            if obj.type == 'MESH':
                 bm = bmesh.new()
                 
                 mesh = obj.data
                 bm.from_mesh(mesh)
                 map[obj] = bm
-        
+                
         if bookmark != -1:
             self.history_bookmarks[bookmark] = map
                 
@@ -350,6 +350,8 @@ class SimpleOperator(bpy.types.Operator):
         
         if hit_object and len(self.stroke_trail) > 0:
             
+            if self.edit_object == None:
+                self.edit_object = object
 #            print("--------Edit object uvs") 
             
             mesh = object.data
@@ -437,6 +439,7 @@ class SimpleOperator(bpy.types.Operator):
             
         else:
             self.stroke_trail = []
+            self.edit_object = None
         
     def mouse_move(self, context, event):
         mouse_pos = (event.mouse_region_x, event.mouse_region_y)
@@ -498,7 +501,7 @@ class SimpleOperator(bpy.types.Operator):
             self.dragging = False
             self.edit_object = None
             
-#            self.history_snapshot(context)
+            self.history_snapshot(context)
 
 
         return {'RUNNING_MODAL'}
@@ -558,6 +561,49 @@ class SimpleOperator(bpy.types.Operator):
             self.show_cursor = False
     
             return {'FINISHED'}
+            
+        elif event.type in {'Z'}:
+            if event.ctrl:
+                if event.shift:
+                    if event.value == "RELEASE":
+                        self.history_redo(context)
+                    return {'RUNNING_MODAL'}
+                else:
+                    if event.value == "RELEASE":
+                        self.history_undo(context)
+
+                    return {'RUNNING_MODAL'}
+                
+            return {'RUNNING_MODAL'}
+            
+        elif event.type in {'RET'}:
+            if event.value == 'RELEASE':
+                bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
+                self.history_clear(context)
+                return {'FINISHED'}
+            return {'RUNNING_MODAL'}
+
+        elif event.type in {'PAGE_UP', 'RIGHT_BRACKET'}:
+            if event.value == "PRESS":
+                brush_radius = context.scene.uv_brush_props.radius
+                brush_radius = brush_radius + .1
+                context.scene.uv_brush_props.radius = brush_radius
+            return {'RUNNING_MODAL'}
+
+        elif event.type in {'PAGE_DOWN', 'LEFT_BRACKET'}:
+            if event.value == "PRESS":
+                brush_radius = context.scene.uv_brush_props.radius
+                brush_radius = max(brush_radius - .1, .1)
+                context.scene.uv_brush_props.radius = brush_radius
+            return {'RUNNING_MODAL'}
+            
+        elif event.type in {'RIGHTMOUSE', 'ESC'}:
+            if event.value == 'RELEASE':
+                bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
+                self.history_restore_bookmark(context, 0)
+                self.history_clear(context)            
+                return {'CANCELLED'}
+            return {'RUNNING_MODAL'}
 
         return {'RUNNING_MODAL'}
 
@@ -566,15 +612,22 @@ class SimpleOperator(bpy.types.Operator):
 #        return {'FINISHED'}
 
     def invoke(self, context, event):
-#        print("invoke evTyp:%s evVal:%s" % (str(event.type), str(event.value)))
-        context.window_manager.modal_handler_add(self)
+        if context.area.type == 'VIEW_3D':
+    #        print("invoke evTyp:%s evVal:%s" % (str(event.type), str(event.value)))
 
-        args = (self, context)
-        self._handle = bpy.types.SpaceView3D.draw_handler_add(draw_callback, args, 'WINDOW', 'POST_VIEW')
-#        self.show_cursor = True
-        
-        
-        return {'RUNNING_MODAL'}
+            args = (self, context)
+            self._handle = bpy.types.SpaceView3D.draw_handler_add(draw_callback, args, 'WINDOW', 'POST_VIEW')
+
+            redraw_all_viewports(context)
+            self.history_clear(context)
+            self.history_snapshot(context)
+            self.history_snapshot(context, 0)
+
+            context.window_manager.modal_handler_add(self)
+            return {'RUNNING_MODAL'}
+        else:
+            self.report({'WARNING'}, "View3D not found, cannot run operator")
+            return {'CANCELLED'}
 
 
 #-------------------------------------
