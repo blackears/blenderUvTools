@@ -181,7 +181,8 @@ class UvPlaneControl:
     
     def draw(self, context):
         shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
-        batchCube = batch_for_shader(shader, 'LINES', {"pos": coordsCube})
+#        batchCube = batch_for_shader(shader, 'LINES', {"pos": coordsCube})
+        batchCube = batch_for_shader(shader, 'LINE_STRIP', {"pos": coordsSquare2_strip})
             
         #self.controlMtx = 
         
@@ -233,6 +234,9 @@ def draw_callback(self, context):
     
     ctx = bpy.context
 
+    if self.control != None:
+        self.control.draw(context)
+    
     # region = context.region
     # rv3d = context.region_data
 
