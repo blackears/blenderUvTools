@@ -34,6 +34,11 @@ if "bpy" in locals():
         importlib.reload(uvBrushTool)
     else:
         from .operators import uvBrushTool
+
+    if "uvLayoutPlane" in locals():
+        importlib.reload(uvLayoutPlane)
+    else:
+        from .operators import uvLayoutPlane
         
     if "uvToolsPanel" in locals():
         importlib.reload(uvToolsPanel)
@@ -42,14 +47,17 @@ if "bpy" in locals():
         
 else:
     from .operators import uvBrushTool
+    from .operators import uvLayoutPlane
     from .operators import uvToolsPanel
 
 def register():
     uvBrushTool.register()
+    uvLayoutPlane.register()
     uvToolsPanel.register()
 
 
 def unregister():
     uvBrushTool.unregister()
+    uvLayoutPlane.unregister()
     uvToolsPanel.unregister()
 

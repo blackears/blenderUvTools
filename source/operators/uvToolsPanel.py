@@ -34,7 +34,11 @@ class UvToolsPanel(bpy.types.Panel):
         col.prop(settings, "radius")
         col.prop(settings, "strength")
         col.prop(settings, "use_pressure")
+        
+        layout.separator()
 
+        col = layout.column();
+        col.operator("kitfox.uv_plane_layout_op", text="Uv Plane Project", icon_value = pcoll["uvBrush"].icon_id)
         
 #---------------------------
 
