@@ -323,6 +323,21 @@ def closest_axis(vector):
     else:
         return Axis.Z
     
+
+def project_point_onto_plane(point, plane_pt, plane_norm):
+    proj = (point - plane_pt).project(plane_norm)
+    return point - proj
+
+#return vector of coefficients [a, b, c] such that vec = a * v0 + b * v1 + c * v2
+def express_in_basis(vec, v0, v1, v2):
+    v = mathutils.Matrix((v0, v1, v2)) #row order
+    if v.determinant() == 0:
+        return mathutils.Vector((0, 0, 0))
+        
+    vI = v.copy()
+    vI.transpose()
+    vI.invert()
+    return vI @ vec
     
 def snap_to_grid(pos, unit):
     p = mathutils.Vector(pos)

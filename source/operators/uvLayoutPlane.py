@@ -27,6 +27,26 @@ class UvPlaneLayoutSettings(bpy.types.PropertyGroup):
     )
 
 
+#---------------------------
+
+class ContraintType(Enum):
+    OMNI = 0,
+    VECTOR = 1,
+    PLANE = 2
+
+class HandleContraint:
+    def __init__(self):
+        pass
+    
+class HandleBody:
+    def __init__(self):
+        pass
+
+
+class Handle:
+    def __init__(self, constraint = ContraintType.OMNI, axis = None):
+        self.contraintAxis = None
+        pass
 
 #---------------------------
 
