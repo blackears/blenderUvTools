@@ -13,6 +13,7 @@ from bpy_extras import view3d_utils
 from enum import Enum
 
 from .vecmath import *
+from .handles import *
 from .blenderUtil import *
 
 class UvPlaneLayoutSettings(bpy.types.PropertyGroup):
@@ -29,57 +30,77 @@ class UvPlaneLayoutSettings(bpy.types.PropertyGroup):
 
 #---------------------------
 
-class ContraintType(Enum):
-    OMNI = 0,
-    VECTOR = 1,
-    PLANE = 2
-
-class HandleContraint:
-    def __init__(self):
-        pass
-    
-class HandleBody:
-    def __init__(self):
-        pass
-
-
-class Handle:
-    def __init__(self, constraint = ContraintType.OMNI, axis = None):
-        self.contraintAxis = None
-        pass
-
-#---------------------------
-
 class UvPlaneControl:
-#    handles = []
-#    bmesh_start = None
     
     def __init__(self, context):
         self.controlMtx = None
     
         self.setFromMeshes(context)
 
-    
-        # self.obj = obj
-        # mesh = obj.data
         
-        self.handles = []
+        self.handle00 = HandleCorner(self, mathutils.Matrix.Translation(-vecX - vecY), vecZ, -vecX - vecY)
+        self.handle02 = HandleCorner(self, mathutils.Matrix.Translation(-vecX + vecY), vecZ, -vecX + vecY)
+        self.handle20 = HandleCorner(self, mathutils.Matrix.Translation(vecX - vecY), vecZ, vecX - vecY)
+        self.handle22 = HandleCorner(self, mathutils.Matrix.Translation(vecX + vecY), vecZ, vecX + vecY)
         
-        # self.bmesh_start = bmesh.new()
-        # self.bmesh_start.from_mesh(mesh)
+        self.handles = [self.handle00, self.handle02, self.handle20, self.handle22]
         
-        # (self.minCo, self.maxCo) = self.mesh_bounds_world(obj)
-        
-        # span = self.maxCo - self.minCo
-        
-        # self.handles.append(HandleDirectionial(self, self.minCo + span * mathutils.Vector((.5, .5, 0)), -vecZ, Face.Z_NEG))
-        # self.handles.append(HandleDirectionial(self, self.minCo + span * mathutils.Vector((.5, .5, 1)), vecZ, Face.Z_POS))
+        self.layoutHandles()
 
-        # self.handles.append(HandleDirectionial(self, self.minCo + span * mathutils.Vector((.5, 0, .5)), -vecY, Face.Y_NEG))
-        # self.handles.append(HandleDirectionial(self, self.minCo + span * mathutils.Vector((.5, 1, .5)), vecY, Face.Y_POS))
+        
+    def __del__(self):
+#        print("UvPlaneControl DESTRUCT")
+        for h in self.handles:
+            del h
+        
+            
+    def mouse_move(self, context, event):
+        consumed = False
+        for handle in self.handles:
+            if handle.mouse_move(context, event):
+                consumed = True
+                break
+        return consumed
 
-        # self.handles.append(HandleDirectionial(self, self.minCo + span * mathutils.Vector((0, .5, .5)), -vecX, Face.X_NEG))
-        # self.handles.append(HandleDirectionial(self, self.minCo + span * mathutils.Vector((1, .5, .5)), vecX, Face.X_POS))
+    def mouse_click(self, context, event):
+        consumed = False
+        for handle in self.handles:
+            if handle.mouse_click(context, event):
+                consumed = True
+                break
+            
+        return consumed
+
+    def layoutHandles(self):
+#        i = self.controlMtx.col[0].to_3d()
+#        j = self.controlMtx.col[1].to_3d()
+        k = self.controlMtx.col[2].to_3d()
+#        origin = self.controlMtx.col[3].to_3d()
+        
+        self.handle00.transform = self.controlMtx @ mathutils.Matrix.Translation((-1, -1, 0))
+        self.handle00.constraint.planeNormal = k
+#        self.handle00.offsetFromOrigin = -i + -j
+        
+        self.handle02.transform = self.controlMtx @ mathutils.Matrix.Translation((-1, 1, 0))
+        self.handle02.constraint.planeNormal = k
+#        self.handle02.offsetFromOrigin = -i + j
+        
+        self.handle20.transform = self.controlMtx @ mathutils.Matrix.Translation((1, -1, 0))
+        self.handle20.constraint.planeNormal = k
+#        self.handle20.offsetFromOrigin = i + -j
+        
+        self.handle22.transform = self.controlMtx @ mathutils.Matrix.Translation((1, 1, 0))
+        self.handle22.constraint.planeNormal = k
+#        self.handle22.offsetFromOrigin = i + j
+        
+        
+    def updateProjectionMatrix(self, context, matrix):
+        self.controlMtx = matrix
+        self.layoutHandles()
+        redraw_all_viewports(context)
+        
+    # def cancelLayout(self, matrix):
+        # pass
 
     def findTangent(self, norm):
         if 1 - norm.normalized().dot(vecZ) < .0001:
@@ -189,24 +210,15 @@ class UvPlaneControl:
             
 
     
-        
-    def __del__(self):
-#        print("MeshTracker DESTRUCT")
-        for h in self.handles:
-            del h
-        
-        # if self.bmesh_start != None:
-            # self.bmesh_start.free()
 
     
     def draw(self, context):
+        print("draign control")
+    
         shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
 #        batchCube = batch_for_shader(shader, 'LINES', {"pos": coordsCube})
         batchCube = batch_for_shader(shader, 'LINE_STRIP', {"pos": coordsSquare2_strip})
             
-        #self.controlMtx = 
-        
-#        (minCo, maxCo) = self.mesh_bounds_world(self.obj)
         
         if self.controlMtx == None:
             return
@@ -224,27 +236,10 @@ class UvPlaneControl:
     
         bgl.glDisable(bgl.GL_DEPTH_TEST)
         
-#        print("  DRAW HANDLESs")
+        print("  DRAW HANDLESs")
         for handle in self.handles:
 #            print("  Drawing handle " + str(handle))
             handle.draw(context)
-            
-    def mouse_move(self, context, event):
-        consumed = False
-        for handle in self.handles:
-            if handle.mouse_move(context, event):
-                consumed = True
-                break
-        return consumed
-
-    def mouse_click(self, context, event):
-        consumed = False
-        for handle in self.handles:
-            if handle.mouse_button(context, event):
-                consumed = True
-                break
-            
-        return consumed
 
 #---------------------------
 

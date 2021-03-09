@@ -48,37 +48,6 @@ class UvBrushToolSettings(bpy.types.PropertyGroup):
 
 #--------------------------------------
 
-# def project_point_onto_plane(point, plane_pt, plane_norm):
-    # proj = (point - plane_pt).project(plane_norm)
-    # return point - proj
-
-# #return vector of coefficients [a, b, c] such that vec = a * v0 + b * v1 + c * v2
-# def express_in_basis(vec, v0, v1, v2):
-    # v = mathutils.Matrix((v0, v1, v2)) #row order
-    # if v.determinant() == 0:
-        # return mathutils.Vector((0, 0, 0))
-        
-# #    print("coeffMtx v %s" % (str(v)))
-    # vI = v.copy()
-    # vI.transpose()
-# #    print("vI Mtx %s" % (str(vI)))
-    # vI.invert()
-# #    print("vI Mtx %s" % (str(vI)))
-    # return vI @ vec
-
-
-# def ray_cast(context, viewlayer, ray_origin, view_vector, object = None):
-    # if bpy.app.version >= (2, 91, 0):
-        # return context.scene.ray_cast(viewlayer.depsgraph, ray_origin, view_vector)
-    # else:
-        # return context.scene.ray_cast(viewlayer, ray_origin, view_vector)
-
-
-# def redraw_all_viewports(context):
-    # for area in bpy.context.screen.areas: # iterate through areas in current screen
-        # if area.type == 'VIEW_3D':
-            # area.tag_redraw()
-
 
 #Find matrix that will rotate Z axis to point along normal
 #coord - point in world space

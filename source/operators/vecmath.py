@@ -7,6 +7,7 @@ from enum import Enum
 vecX = mathutils.Vector((1, 0, 0))
 vecY = mathutils.Vector((0, 1, 0))
 vecZ = mathutils.Vector((0, 0, 1))
+vecZero = mathutils.Vector((0, 0, 0))
 
 circleSegs = 64
 coordsCircle = [(math.sin(((2 * math.pi * i) / circleSegs)), math.cos((math.pi * 2 * i) / circleSegs), 0) for i in range(circleSegs + 1)]
@@ -64,6 +65,151 @@ cubeUvs = [
 ((0, 0), (1, 0), (1, 1), (0, 1))
 ]
 
+def unitCube():
+    coords = []
+    normals = []
+    uvs = []
+
+    v000 = mathutils.Vector((-1, -1, -1))
+    v100 = mathutils.Vector((1, -1, -1))
+    v010 = mathutils.Vector((-1, 1, -1))
+    v110 = mathutils.Vector((1, 1, -1))
+    v001 = mathutils.Vector((-1, -1, 1))
+    v101 = mathutils.Vector((1, -1, 1))
+    v011 = mathutils.Vector((-1, 1, 1))
+    v111 = mathutils.Vector((1, 1, 1))
+
+    nx0 = mathutils.Vector((-1, 0, 0))
+    nx1 = mathutils.Vector((1, 0, 0))
+    ny0 = mathutils.Vector((0, -1, 0))
+    ny1 = mathutils.Vector((0, 1, 0))
+    nz0 = mathutils.Vector((0, 0, -1))
+    nz1 = mathutils.Vector((0, 0, 1))
+
+    uv00 = mathutils.Vector((0, 0))
+    uv10 = mathutils.Vector((1, 0))
+    uv01 = mathutils.Vector((0, 1))
+    uv11 = mathutils.Vector((1, 1))
+    
+    #Face -x
+    coords.append(v010)
+    coords.append(v000)
+    coords.append(v001)
+    
+    coords.append(v010)
+    coords.append(v001)
+    coords.append(v011)
+
+    for i in range(6):
+        normals.append(nx0)
+    
+    uvs.append(uv00)
+    uvs.append(uv10)
+    uvs.append(uv11)
+    uvs.append(uv00)
+    uvs.append(uv11)
+    uvs.append(uv01)
+    
+    
+    #Face +x
+    coords.append(v100)
+    coords.append(v110)
+    coords.append(v111)
+    
+    coords.append(v100)
+    coords.append(v111)
+    coords.append(v101)
+
+    for i in range(6):
+        normals.append(nx1)
+    
+    uvs.append(uv00)
+    uvs.append(uv10)
+    uvs.append(uv11)
+    uvs.append(uv00)
+    uvs.append(uv11)
+    uvs.append(uv01)
+    
+    #Face -y
+    coords.append(v000)
+    coords.append(v100)
+    coords.append(v101)
+    
+    coords.append(v000)
+    coords.append(v101)
+    coords.append(v001)
+
+    for i in range(6):
+        normals.append(ny0)
+    
+    uvs.append(uv00)
+    uvs.append(uv10)
+    uvs.append(uv11)
+    uvs.append(uv00)
+    uvs.append(uv11)
+    uvs.append(uv01)
+    
+    
+    #Face +y
+    coords.append(v110)
+    coords.append(v010)
+    coords.append(v011)
+    
+    coords.append(v110)
+    coords.append(v011)
+    coords.append(v111)
+
+    for i in range(6):
+        normals.append(ny1)
+    
+    uvs.append(uv00)
+    uvs.append(uv10)
+    uvs.append(uv11)
+    uvs.append(uv00)
+    uvs.append(uv11)
+    uvs.append(uv01)
+    
+
+    #Face -z
+    coords.append(v010)
+    coords.append(v110)
+    coords.append(v100)
+    
+    coords.append(v010)
+    coords.append(v100)
+    coords.append(v000)
+
+    for i in range(6):
+        normals.append(nz0)
+    
+    uvs.append(uv00)
+    uvs.append(uv10)
+    uvs.append(uv11)
+    uvs.append(uv00)
+    uvs.append(uv11)
+    uvs.append(uv01)
+    
+    
+    #Face +z
+    coords.append(v001)
+    coords.append(v101)
+    coords.append(v111)
+    
+    coords.append(v001)
+    coords.append(v111)
+    coords.append(v011)
+
+    for i in range(6):
+        normals.append(nz1)
+    
+    uvs.append(uv00)
+    uvs.append(uv10)
+    uvs.append(uv11)
+    uvs.append(uv00)
+    uvs.append(uv11)
+    uvs.append(uv01)
+        
+    return (coords, normals, uvs)
 
 def unitCylinder(segs = 16, radius0 = 1, radius1 = 1, bottom_cap = False, top_cap = False):
     coords = []
@@ -366,6 +512,30 @@ def snap_to_grid_plane(pos, unit, plane_point, plane_normal):
     else:
         s = isect_line_plane(sp, vecZ, plane_point, plane_normal)
         return sp + s * vecZ
+
+def intersect_triangle(p0, p1, p2, pickOrigin, pickRay):
+    v10 = p1 - p0
+    v20 = p2 - p0
+    v21 = p2 - p1
+    norm = v10.cross(v20)
+    norm.normalize()
+    
+    scalar = isect_line_plane(pickOrigin, pickRay, p0, norm)
+    hitPoint = pickOrigin + scalar * pickRay
+    
+    vh0 = hitPoint - p0
+    vh1 = hitPoint - p1
+    v01 = -v10
+    
+    if vh0.cross(v20).dot(v10.cross(v20)) < 0:
+        return None
+    if vh0.cross(v10).dot(v20.cross(v10)) < 0:
+        return None
+    if vh1.cross(v21).dot(v01.cross(v21)) < 0:
+        return None
+    
+    return hitPoint
+
     
 
 
