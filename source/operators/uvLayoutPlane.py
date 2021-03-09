@@ -141,13 +141,13 @@ class UvPlaneControl:
             self.controlMtx = None        
             return 
             
-        print("bestNorm %s  bestCenter %s " % (str(bestNormal), str(bestCenter)))
+        #print("bestNorm %s  bestCenter %s " % (str(bestNormal), str(bestCenter)))
             
         #Build matrix from world space to face space
         tangent = self.findTangent(bestNormal)
         binormal = bestNormal.cross(tangent)
 
-        print("tangent %s  binormal %s " % (str(tangent), str(binormal)))
+        #print("tangent %s  binormal %s " % (str(tangent), str(binormal)))
 
         tangent = tangent.to_4d()
         tangent.w = 0
@@ -161,8 +161,8 @@ class UvPlaneControl:
         poly2w.transpose()
         w2poly = poly2w.inverted()
 
-        print("poly2w %s\n" % (str(poly2w)))
-        print("w2poly %s\n" % (str(w2poly)))
+        #print("poly2w %s\n" % (str(poly2w)))
+        #print("w2poly %s\n" % (str(w2poly)))
 
         #find bounds of mesh projected along normal of chosen polygon
         minX = None
@@ -192,7 +192,7 @@ class UvPlaneControl:
                     maxY = faceV.y if maxY == None else max(faceV.y, maxY)
                     
 
-        print("minX %s  maxX %s  minY %s  maxY %s " % (str(minX), str(maxX), str(minY), str(maxY)))
+        #print("minX %s  maxX %s  minY %s  maxY %s " % (str(minX), str(maxX), str(minY), str(maxY)))
 
         dx = maxX - minX
         dy = maxY - minY
@@ -200,20 +200,20 @@ class UvPlaneControl:
         cy = (maxY + minY) / 2
         ctrlCenter = cx * tangent + cy * binormal + center
 #        ctrlCenter.w = 1
-        print("dx %s  dy %s  cx %s  cy %s " % (str(dx), str(dy), str(cx), str(cy)))
-        print("cx tan %s  cy tan %s" % (str(cx * tangent), str(cy * binormal)))
+        #print("dx %s  dy %s  cx %s  cy %s " % (str(dx), str(dy), str(cx), str(cy)))
+        #print("cx tan %s  cy tan %s" % (str(cx * tangent), str(cy * binormal)))
 
         self.controlMtx = mathutils.Matrix((tangent * dx / 2, binormal * dy / 2, bestNormal, ctrlCenter))
         self.controlMtx.transpose()
 
-        print("controlMtx %s" % (str(self.controlMtx)))
+        #print("controlMtx %s" % (str(self.controlMtx)))
             
 
     
 
     
     def draw(self, context):
-        print("draign control")
+        #print("draign control")
     
         shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
 #        batchCube = batch_for_shader(shader, 'LINES', {"pos": coordsCube})
@@ -236,7 +236,7 @@ class UvPlaneControl:
     
         bgl.glDisable(bgl.GL_DEPTH_TEST)
         
-        print("  DRAW HANDLESs")
+#        print("  DRAW HANDLESs")
         for handle in self.handles:
 #            print("  Drawing handle " + str(handle))
             handle.draw(context)

@@ -81,7 +81,7 @@ class HandleBodyCube(HandleBody):
         
         
     def draw(self, context):
-        print("  Drawing cube h body")
+#        print("  Drawing cube h body")
         
         bgl.glEnable(bgl.GL_DEPTH_TEST)
         
@@ -133,13 +133,11 @@ class Handle:
         gpu.matrix.push()
         gpu.matrix.multiply_matrix(self.transform)
 
-        print("Drawing h body  %s" % (str(self.posControl)))
+#        print("Drawing h body  %s" % (str(self.posControl)))
         self.body.draw(context)
         
         gpu.matrix.pop()
         
-    # def intersects(self, pickOrigin, pickRay):
-        # return self.body.intersects(pickOrigin, pickRay)
     
 
 class HandleCorner(Handle):
