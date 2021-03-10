@@ -55,20 +55,22 @@ class HandleContraintOmni(HandleContraint):
     
     
 class HandleBody:
-    def __init__(self, handle, transform):
+    def __init__(self, handle, transform, color, colorDrag):
         self.handle = handle
         self.transform = transform
+        self.color = color
+        self.colorDrag = colorDrag        
         self.dragging = False
 
-    def draw(self, context):
+    def draw(self, context, dragging):
         pass
 
     def intersects(self, handle, pickOrigin, pickRay):
         return False
 
 class HandleBodyCube(HandleBody):
-    def __init__(self, handle, transform):
-        super(HandleBodyCube, self).__init__(handle, transform)
+    def __init__(self, handle, transform, color, colorDrag):
+        super(HandleBodyCube, self).__init__(handle, transform, color, colorDrag)
     
         self.coords, normals, uvs = unitCube()
         
@@ -80,7 +82,7 @@ class HandleBodyCube(HandleBody):
         # self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": coords, "color": colors})
         
         
-    def draw(self, context):
+    def draw(self, context, dragging):
 #        print("  Drawing cube h body")
         
         bgl.glEnable(bgl.GL_DEPTH_TEST)
@@ -88,10 +90,12 @@ class HandleBodyCube(HandleBody):
         gpu.matrix.push()
         
         gpu.matrix.multiply_matrix(self.transform)
-        if self.dragging:
-            self.shader.uniform_float("color", (1, 1, 0, 1))
+        if dragging:
+#            self.shader.uniform_float("color", (1, 1, 0, 1))
+            self.shader.uniform_float("color", self.colorDrag)
         else:
-            self.shader.uniform_float("color", (1, 0, 1, 1))
+            self.shader.uniform_float("color", self.color)
+#            self.shader.uniform_float("color", (1, 0, 1, 1))
         self.batchShape.draw(self.shader)
 
         gpu.matrix.pop()
@@ -134,7 +138,7 @@ class Handle:
         gpu.matrix.multiply_matrix(self.transform)
 
 #        print("Drawing h body  %s" % (str(self.posControl)))
-        self.body.draw(context)
+        self.body.draw(context, self.dragging)
         
         gpu.matrix.pop()
         
@@ -145,7 +149,7 @@ class HandleCorner(Handle):
         
         self.control = control
         xform = mathutils.Matrix.Diagonal(mathutils.Vector((.05, .05, .05, 1)))
-        body = HandleBodyCube(self, xform)
+        body = HandleBodyCube(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
         constraint = HandleContraintPlane(normal)
         
         #Location of handle in i, j, k coords of control's projection matrix
@@ -219,18 +223,14 @@ class HandleCorner(Handle):
             print("fixedPos %s" % (str(fixedPos)))
             print("startOrigin %s" % (str(startOrigin)))
 
-            # newPos = self.startControlOrigin + self.startOffsetFromOrigin + offset
-            # fixedPos = self.startControlOrigin - self.startOffsetFromOrigin
             newPos = startPos + offset
 
             print("offset %s" % (str(offset)))
             print("newPos %s" % (str(newPos)))
             
             newControlOrigin = (newPos + fixedPos) / 2
-#            originOffset = newControlOrigin - projOrigin
 
             print("newControlOrigin %s" % (str(newControlOrigin)))
-#            print("originOffset %s" % (str(originOffset)))
             
             newPosOffset = newPos - newControlOrigin
             w2Proj = self.startControlProj.copy()
@@ -245,9 +245,6 @@ class HandleCorner(Handle):
             i = self.startControlProj.col[0].to_3d()
             j = self.startControlProj.col[1].to_3d()
             k = self.startControlProj.col[2].to_3d()
-            # i.normalize()
-            # j.normalize()
-            # k.normalize()
 
             print("i %s" % (str(i)))
             print("j %s" % (str(j)))
@@ -283,48 +280,7 @@ class HandleCorner(Handle):
 
 
 
-            # print ("drag_Start_pos: " + str(self.drag_start_pos))
-# #            print("<1> self.pos "  + str(self.pos))
-            # self.move_amount = closest_point_to_line(self.pos, self.dir, mouse_near_origin, mouse_ray)
-            # drag_to_pos = self.pos + self.move_amount * self.dir
-            # self.drag_offset = drag_to_pos - self.drag_start_pos
-            # print ("drag_offset: " + str(self.drag_offset))
-            # print ("move_amount: " + str(self.move_amount))
-# #            print("<2> self.pos "  + str(self.pos))
-            
-# #            print("drag to " + str(drag_to_pos))
-# #            print("drag offset " + str(self.drag_offset))
-
-# #            self.mesh_tracker.stretch(self.drag_start_pos, self.drag_offset - self.drag_start_pos, self.face)
-            # self.mesh_tracker.stretch(self.move_amount, self.dir, self.face, False)
-
             return True
         return False
 
-    # def applyOffset(self):
-        # self.controlOrigin
-        # self.startOffsetFromOrigin
-        # self.
-        # pass
 
-
-
-# class HandleGroup:
-    # def __init__(self, transform):
-        # #Location in world space
-        # self.transform = transform
-        # self.handles = []
-
-    # def addChild(self, handle):
-        # self.handles,append(handle)
-
-    # def draw(self, context):
-        # gpu.matrix.push()
-        # gpu.matrix.multiply_matrix(self.transform)
-
-        # self.body.draw(context)
-        
-        # gpu.matrix.pop()
-        
-    # def intersects(self, pickOrigin, pickRay):
-        # return self.body.intersects(pickOrigin, pickRay)

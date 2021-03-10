@@ -43,6 +43,11 @@ class UvPlaneControl:
         self.handle20 = HandleCorner(self, mathutils.Matrix.Translation(vecX - vecY), vecZ, vecX - vecY)
         self.handle22 = HandleCorner(self, mathutils.Matrix.Translation(vecX + vecY), vecZ, vecX + vecY)
         
+        self.handle00.body.color = (0, 0, 1, 1)
+        self.handle02.body.color = (0, 1, 1, 1)
+        self.handle20.body.color = (1, 0, 1, 1)
+        self.handle22.body.color = (1, 1, 1, 1)
+        
         self.handles = [self.handle00, self.handle02, self.handle20, self.handle22]
         
         self.layoutHandles()
