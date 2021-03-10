@@ -67,6 +67,7 @@ class UvPlaneControl:
         for handle in self.handles:
             if handle.mouse_click(context, event):
                 consumed = True
+                redraw_all_viewports(context)
                 break
             
         return consumed

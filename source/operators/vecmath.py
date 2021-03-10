@@ -399,6 +399,9 @@ def isect_line_plane(line_point, line_dir, plane_point, plane_norm):
     to_plane = (plane_point - line_point).project(plane_norm)
     dir_par_to_norm = line_dir.project(plane_norm)
     
+    if dir_par_to_norm.magnitude == 0:
+        return None
+        
     scalar = to_plane.magnitude / dir_par_to_norm.magnitude
     if to_plane.dot(dir_par_to_norm) < 0:
         scalar = -scalar
@@ -521,6 +524,9 @@ def intersect_triangle(p0, p1, p2, pickOrigin, pickRay):
     norm.normalize()
     
     scalar = isect_line_plane(pickOrigin, pickRay, p0, norm)
+    if scalar == None:
+        return None
+        
     hitPoint = pickOrigin + scalar * pickRay
     
     vh0 = hitPoint - p0

@@ -168,19 +168,12 @@ class HandleCorner(Handle):
                 if hit != None:
                     self.dragging = True
                     self.drag_start_pos = hit
-                    #self.drag_start_pos_viewport = mouse_pos_2d
-                    # self.drag_offset = None
-                    # self.move_amount = 0
                     
                     #Structure of original projection matrix
                     self.startControlProj = self.control.controlMtx.copy()
-                    # self.startControlOrigin = self.control.controlMtx.col[4].to_3d()
-                    # self.startOffsetFromOrigin = self.offsetFromOrigin.copy()
-#                    self.origProj = self.control.controlMtx.copy()
-                    # self.i = self.control.controlMtx.transform.col[0]
-                    # self.j = self.transform.col[1]
-                    # self.k = self.transform.col[2]
-                    # self.origin = self.transform.col[4]
+
+                    print("--starting drag")
+                    print("startControlProj %s" % (str(self.startControlProj)))
                     
                     return True
             
@@ -214,25 +207,64 @@ class HandleCorner(Handle):
             projOrigin = self.startControlProj.col[3].to_3d()
             # projI = self.startControlProj.col[0].to_3d()
             # projJ = self.startControlProj.col[1].to_3d()
+
+            print("projOrigin %s" % (str(projOrigin)))
             
             #startPos = self.posControl.x * projI + self.posControl.y * projJ + projOrigin
             startPos = self.startControlProj @ self.posControl
             fixedPos = self.startControlProj @ -self.posControl
+            startOrigin = self.startControlProj.col[3].to_3d()
+
+            print("startPos %s" % (str(startPos)))
+            print("fixedPos %s" % (str(fixedPos)))
+            print("startOrigin %s" % (str(startOrigin)))
 
             # newPos = self.startControlOrigin + self.startOffsetFromOrigin + offset
             # fixedPos = self.startControlOrigin - self.startOffsetFromOrigin
             newPos = startPos + offset
+
+            print("offset %s" % (str(offset)))
+            print("newPos %s" % (str(newPos)))
             
             newControlOrigin = (newPos + fixedPos) / 2
-            originOffset = newControlOrigin - projOrigin
+#            originOffset = newControlOrigin - projOrigin
+
+            print("newControlOrigin %s" % (str(newControlOrigin)))
+#            print("originOffset %s" % (str(originOffset)))
+            
+            newPosOffset = newPos - newControlOrigin
+            w2Proj = self.startControlProj.copy()
+            w2Proj.invert()
+            newPosOffsetProj = w2Proj @ (newPosOffset + startOrigin)
+#            newPosOffsetProj = w2Proj @ newPos
+
+#            print("newPosOffset %s" % (str(newPosOffset)))
+            print("newPosOffsetProj %s" % (str(newPosOffsetProj)))
+            
             
             i = self.startControlProj.col[0].to_3d()
             j = self.startControlProj.col[1].to_3d()
             k = self.startControlProj.col[2].to_3d()
+            # i.normalize()
+            # j.normalize()
+            # k.normalize()
+
+            print("i %s" % (str(i)))
+            print("j %s" % (str(j)))
+            print("k %s" % (str(k)))
+
             
-            newI = i - originOffset.project(i)
-            newJ = j - originOffset.project(j)
-            newK = k - originOffset.project(k)
+            # newI = i - originOffset.project(i)
+            # newJ = j - originOffset.project(j)
+            # newK = k - originOffset.project(k)
+            newI = i * newPosOffsetProj.x / self.posControl.x
+            newJ = j * newPosOffsetProj.y / self.posControl.y
+            #newK = k * newPosOffsetProj.z / self.posControl.z
+            newK = k.copy()
+
+            #print("proj i %s" % (str(originOffset.project(i))))
+            #print("proj j %s" % (str(originOffset.project(j))))
+            #print("proj k %s" % (str(originOffset.project(k))))
 
             newI = newI.to_4d()
             newI.w = 0
@@ -244,6 +276,8 @@ class HandleCorner(Handle):
             
             newProjMatrix = mathutils.Matrix((newI, newJ, newK, newControlOrigin))
             newProjMatrix.transpose()
+
+            print("newProjMatrix %s" % (str(newProjMatrix)))
 
             self.control.updateProjectionMatrix(context, newProjMatrix)
 
