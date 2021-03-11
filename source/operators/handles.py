@@ -25,7 +25,14 @@ class HandleContraintVector(HandleContraint):
         self.vector = vector
         
     def constrain(self, offset, viewDir):
+        print("---Constrain ")
+        print("vector " + str(self.vector))
+        print("offset " + str(offset))
+        print("viewDir " + str(viewDir))
         scalar = closest_point_to_line(vecZero, self.vector, offset, viewDir)
+        print("scalar " + str(scalar))
+        print("scalar * self.vector " + str(scalar * self.vector))
+        print("---")
         return scalar * self.vector
     
 #        return offset.project(self.vector)
@@ -137,20 +144,19 @@ class Handle:
         gpu.matrix.push()
         gpu.matrix.multiply_matrix(self.transform)
 
-#        print("Drawing h body  %s" % (str(self.posControl)))
         self.body.draw(context, self.dragging)
         
         gpu.matrix.pop()
         
     
 
-class HandleCorner(Handle):
-    def __init__(self, control, transform, normal, posControl):
+class HandleScaleAroundOrigin(Handle):
+    def __init__(self, control, transform, constraint, posControl):
         
         self.control = control
         xform = mathutils.Matrix.Diagonal(mathutils.Vector((.05, .05, .05, 1)))
         body = HandleBodyCube(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
-        constraint = HandleContraintPlane(normal)
+#        constraint = HandleContraintPlane(normal)
         
         #Location of handle in i, j, k coords of control's projection matrix
         self.posControl = posControl
@@ -176,8 +182,8 @@ class HandleCorner(Handle):
                     #Structure of original projection matrix
                     self.startControlProj = self.control.controlMtx.copy()
 
-                    print("--starting drag")
-                    print("startControlProj %s" % (str(self.startControlProj)))
+                    # print("--starting drag")
+                    # print("startControlProj %s" % (str(self.startControlProj)))
                     
                     return True
             
@@ -204,10 +210,14 @@ class HandleCorner(Handle):
             startPointOffset = self.drag_start_pos - mouse_near_origin
             offsetPerpToView = startPointOffset.project(mouse_ray) - startPointOffset
 
+            print("posControl %s" % (str(self.posControl)))
+            print("offsetPerpToView %s" % (str(offsetPerpToView)))
+
             offset = self.constraint.constrain(offsetPerpToView, mouse_ray)
             #self.applyOffset(offset)
 
-#            self.controlOrigin
+            print("offset %s" % (str(offset)))
+
             projOrigin = self.startControlProj.col[3].to_3d()
             # projI = self.startControlProj.col[0].to_3d()
             # projJ = self.startControlProj.col[1].to_3d()
@@ -225,7 +235,6 @@ class HandleCorner(Handle):
 
             newPos = startPos + offset
 
-            print("offset %s" % (str(offset)))
             print("newPos %s" % (str(newPos)))
             
             newControlOrigin = (newPos + fixedPos) / 2
@@ -254,10 +263,11 @@ class HandleCorner(Handle):
             # newI = i - originOffset.project(i)
             # newJ = j - originOffset.project(j)
             # newK = k - originOffset.project(k)
-            newI = i * newPosOffsetProj.x / self.posControl.x
-            newJ = j * newPosOffsetProj.y / self.posControl.y
+            newI = i.copy() if self.posControl.x == 0 else i * newPosOffsetProj.x / self.posControl.x
+            newJ = j.copy() if self.posControl.y == 0 else j * newPosOffsetProj.y / self.posControl.y
+            newK = k.copy() if self.posControl.z == 0 else j * newPosOffsetProj.z / self.posControl.z
             #newK = k * newPosOffsetProj.z / self.posControl.z
-            newK = k.copy()
+#            newK = k.copy()
 
             #print("proj i %s" % (str(originOffset.project(i))))
             #print("proj j %s" % (str(originOffset.project(j))))
@@ -278,9 +288,22 @@ class HandleCorner(Handle):
 
             self.control.updateProjectionMatrix(context, newProjMatrix)
 
-
-
             return True
         return False
 
+
+class HandleCorner(HandleScaleAroundOrigin):
+    def __init__(self, control, transform, normal, posControl):
+        
+        constraint = HandleContraintPlane(normal)
+
+        super().__init__(control, transform, constraint, posControl)
+
+
+class HandleEdge(HandleScaleAroundOrigin):
+    def __init__(self, control, transform, direction, posControl):
+        
+        constraint = HandleContraintVector(direction)
+
+        super().__init__(control, transform, constraint, posControl)
 

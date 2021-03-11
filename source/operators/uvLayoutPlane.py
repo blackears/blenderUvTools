@@ -42,13 +42,18 @@ class UvPlaneControl:
         self.handle02 = HandleCorner(self, mathutils.Matrix.Translation(-vecX + vecY), vecZ, -vecX + vecY)
         self.handle20 = HandleCorner(self, mathutils.Matrix.Translation(vecX - vecY), vecZ, vecX - vecY)
         self.handle22 = HandleCorner(self, mathutils.Matrix.Translation(vecX + vecY), vecZ, vecX + vecY)
+
+        self.handle10 = HandleEdge(self, mathutils.Matrix.Translation(-vecY), -vecY, -vecY)
+        self.handle01 = HandleEdge(self, mathutils.Matrix.Translation(-vecX), -vecX, -vecX)
+        self.handle12 = HandleEdge(self, mathutils.Matrix.Translation(vecY), vecY, vecY)
+        self.handle21 = HandleEdge(self, mathutils.Matrix.Translation(vecX), vecX, vecX)
         
         self.handle00.body.color = (0, 0, 1, 1)
         self.handle02.body.color = (0, 1, 1, 1)
         self.handle20.body.color = (1, 0, 1, 1)
         self.handle22.body.color = (1, 1, 1, 1)
         
-        self.handles = [self.handle00, self.handle02, self.handle20, self.handle22]
+        self.handles = [self.handle00, self.handle02, self.handle20, self.handle22, self.handle10, self.handle01, self.handle12, self.handle21]
         
         self.layoutHandles()
 
@@ -78,27 +83,34 @@ class UvPlaneControl:
         return consumed
 
     def layoutHandles(self):
-#        i = self.controlMtx.col[0].to_3d()
-#        j = self.controlMtx.col[1].to_3d()
+        i = self.controlMtx.col[0].to_3d()
+        j = self.controlMtx.col[1].to_3d()
         k = self.controlMtx.col[2].to_3d()
-#        origin = self.controlMtx.col[3].to_3d()
         
         self.handle00.transform = self.controlMtx @ mathutils.Matrix.Translation((-1, -1, 0))
         self.handle00.constraint.planeNormal = k
-#        self.handle00.offsetFromOrigin = -i + -j
         
         self.handle02.transform = self.controlMtx @ mathutils.Matrix.Translation((-1, 1, 0))
         self.handle02.constraint.planeNormal = k
-#        self.handle02.offsetFromOrigin = -i + j
         
         self.handle20.transform = self.controlMtx @ mathutils.Matrix.Translation((1, -1, 0))
         self.handle20.constraint.planeNormal = k
-#        self.handle20.offsetFromOrigin = i + -j
         
         self.handle22.transform = self.controlMtx @ mathutils.Matrix.Translation((1, 1, 0))
         self.handle22.constraint.planeNormal = k
-#        self.handle22.offsetFromOrigin = i + j
         
+        
+        self.handle01.transform = self.controlMtx @ mathutils.Matrix.Translation(-vecX)
+        self.handle01.constraint.vector = -i
+        
+        self.handle21.transform = self.controlMtx @ mathutils.Matrix.Translation(vecX)
+        self.handle21.constraint.vector = i
+        
+        self.handle10.transform = self.controlMtx @ mathutils.Matrix.Translation(-vecY)
+        self.handle10.constraint.vector = -j
+        
+        self.handle12.transform = self.controlMtx @ mathutils.Matrix.Translation(vecY)
+        self.handle12.constraint.vector = j
         
     def updateProjectionMatrix(self, context, matrix):
         self.controlMtx = matrix
