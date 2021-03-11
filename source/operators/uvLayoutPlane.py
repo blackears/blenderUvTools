@@ -47,13 +47,15 @@ class UvPlaneControl:
         self.handle01 = HandleEdge(self, mathutils.Matrix.Translation(-vecX), -vecX, -vecX)
         self.handle12 = HandleEdge(self, mathutils.Matrix.Translation(vecY), vecY, vecY)
         self.handle21 = HandleEdge(self, mathutils.Matrix.Translation(vecX), vecX, vecX)
+
+        self.handle11 = HandleTranslate(self, mathutils.Matrix(), HandleConstraintOmni(), vecZero)
         
         self.handle00.body.color = (0, 0, 1, 1)
         self.handle02.body.color = (0, 1, 1, 1)
         self.handle20.body.color = (1, 0, 1, 1)
         self.handle22.body.color = (1, 1, 1, 1)
         
-        self.handles = [self.handle00, self.handle02, self.handle20, self.handle22, self.handle10, self.handle01, self.handle12, self.handle21]
+        self.handles = [self.handle00, self.handle02, self.handle20, self.handle22, self.handle10, self.handle01, self.handle12, self.handle21, self.handle11]
         
         self.layoutHandles()
 
@@ -111,6 +113,8 @@ class UvPlaneControl:
         
         self.handle12.transform = self.controlMtx @ mathutils.Matrix.Translation(vecY)
         self.handle12.constraint.vector = j
+
+        self.handle11.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero)
         
     def updateProjectionMatrix(self, context, matrix):
         self.controlMtx = matrix

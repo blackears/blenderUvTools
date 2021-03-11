@@ -19,25 +19,25 @@ class HandleContraint:
         #By default just pass back offset
         return offset
 
-class HandleContraintVector(HandleContraint):
+class HandleConstraintVector(HandleContraint):
     def __init__(self, vector):
         super().__init__()
         self.vector = vector
         
     def constrain(self, offset, viewDir):
-        print("---Constrain ")
-        print("vector " + str(self.vector))
-        print("offset " + str(offset))
-        print("viewDir " + str(viewDir))
+#        print("---Constrain ")
+#        print("vector " + str(self.vector))
+#        print("offset " + str(offset))
+#        print("viewDir " + str(viewDir))
         scalar = closest_point_to_line(vecZero, self.vector, offset, viewDir)
-        print("scalar " + str(scalar))
-        print("scalar * self.vector " + str(scalar * self.vector))
-        print("---")
+#        print("scalar " + str(scalar))
+#        print("scalar * self.vector " + str(scalar * self.vector))
+#        print("---")
         return scalar * self.vector
     
 #        return offset.project(self.vector)
 
-class HandleContraintPlane(HandleContraint):
+class HandleConstraintPlane(HandleContraint):
     def __init__(self, planeNormal):
         super().__init__()
         self.planeNormal = planeNormal
@@ -50,7 +50,7 @@ class HandleContraintPlane(HandleContraint):
         # return offset - planeOff
 
 
-class HandleContraintOmni(HandleContraint):
+class HandleConstraintOmni(HandleContraint):
     def __init__(self):
         super().__init__()
         
@@ -156,7 +156,6 @@ class HandleScaleAroundOrigin(Handle):
         self.control = control
         xform = mathutils.Matrix.Diagonal(mathutils.Vector((.05, .05, .05, 1)))
         body = HandleBodyCube(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
-#        constraint = HandleContraintPlane(normal)
         
         #Location of handle in i, j, k coords of control's projection matrix
         self.posControl = posControl
@@ -214,17 +213,13 @@ class HandleScaleAroundOrigin(Handle):
             print("offsetPerpToView %s" % (str(offsetPerpToView)))
 
             offset = self.constraint.constrain(offsetPerpToView, mouse_ray)
-            #self.applyOffset(offset)
 
             print("offset %s" % (str(offset)))
 
             projOrigin = self.startControlProj.col[3].to_3d()
-            # projI = self.startControlProj.col[0].to_3d()
-            # projJ = self.startControlProj.col[1].to_3d()
 
             print("projOrigin %s" % (str(projOrigin)))
             
-            #startPos = self.posControl.x * projI + self.posControl.y * projJ + projOrigin
             startPos = self.startControlProj @ self.posControl
             fixedPos = self.startControlProj @ -self.posControl
             startOrigin = self.startControlProj.col[3].to_3d()
@@ -245,9 +240,7 @@ class HandleScaleAroundOrigin(Handle):
             w2Proj = self.startControlProj.copy()
             w2Proj.invert()
             newPosOffsetProj = w2Proj @ (newPosOffset + startOrigin)
-#            newPosOffsetProj = w2Proj @ newPos
 
-#            print("newPosOffset %s" % (str(newPosOffset)))
             print("newPosOffsetProj %s" % (str(newPosOffsetProj)))
             
             
@@ -260,18 +253,10 @@ class HandleScaleAroundOrigin(Handle):
             print("k %s" % (str(k)))
 
             
-            # newI = i - originOffset.project(i)
-            # newJ = j - originOffset.project(j)
-            # newK = k - originOffset.project(k)
             newI = i.copy() if self.posControl.x == 0 else i * newPosOffsetProj.x / self.posControl.x
             newJ = j.copy() if self.posControl.y == 0 else j * newPosOffsetProj.y / self.posControl.y
             newK = k.copy() if self.posControl.z == 0 else j * newPosOffsetProj.z / self.posControl.z
-            #newK = k * newPosOffsetProj.z / self.posControl.z
-#            newK = k.copy()
 
-            #print("proj i %s" % (str(originOffset.project(i))))
-            #print("proj j %s" % (str(originOffset.project(j))))
-            #print("proj k %s" % (str(originOffset.project(k))))
 
             newI = newI.to_4d()
             newI.w = 0
@@ -295,7 +280,7 @@ class HandleScaleAroundOrigin(Handle):
 class HandleCorner(HandleScaleAroundOrigin):
     def __init__(self, control, transform, normal, posControl):
         
-        constraint = HandleContraintPlane(normal)
+        constraint = HandleConstraintPlane(normal)
 
         super().__init__(control, transform, constraint, posControl)
 
@@ -303,7 +288,139 @@ class HandleCorner(HandleScaleAroundOrigin):
 class HandleEdge(HandleScaleAroundOrigin):
     def __init__(self, control, transform, direction, posControl):
         
-        constraint = HandleContraintVector(direction)
+        constraint = HandleConstraintVector(direction)
 
         super().__init__(control, transform, constraint, posControl)
 
+
+class HandleTranslate(Handle):
+    def __init__(self, control, transform, constraint, posControl):
+        
+        self.control = control
+        xform = mathutils.Matrix.Diagonal(mathutils.Vector((.05, .05, .05, 1)))
+        body = HandleBodyCube(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
+        
+        #Location of handle in i, j, k coords of control's projection matrix
+        self.posControl = posControl
+
+        super().__init__(transform, body, constraint)
+
+    
+    def mouse_click(self, context, event):
+        if event.value == "PRESS":
+            if not self.dragging:
+                region = context.region
+                rv3d = context.region_data
+
+                mouse_pos_2d = (event.mouse_region_x, event.mouse_region_y)
+                mouse_ray = view3d_utils.region_2d_to_vector_3d(region, rv3d, mouse_pos_2d)
+                mouse_near_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, mouse_pos_2d)
+
+                hit = self.body.intersect(mouse_near_origin, mouse_ray)
+                if hit != None:
+                    self.dragging = True
+                    self.drag_start_pos = hit
+                    
+                    #Structure of original projection matrix
+                    self.startControlProj = self.control.controlMtx.copy()
+                    
+                    return True
+        else:
+            if self.dragging:
+                self.dragging = False
+                # self.drag_offset = None
+
+                #self.mesh_tracker.stretch(self.move_amount, self.dir, self.face, True)
+                return True
+                
+        return False
+        
+    def mouse_move(self, context, event):
+        if self.dragging:
+            region = context.region
+            rv3d = context.region_data
+
+            mouse_pos_2d = (event.mouse_region_x, event.mouse_region_y)
+            mouse_ray = view3d_utils.region_2d_to_vector_3d(region, rv3d, mouse_pos_2d)
+            mouse_near_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, mouse_pos_2d)
+
+            #calc offset in 3d space perpendicular to view direction
+            startPointOffset = self.drag_start_pos - mouse_near_origin
+            offsetPerpToView = startPointOffset.project(mouse_ray) - startPointOffset
+
+            print("posControl %s" % (str(self.posControl)))
+            print("offsetPerpToView %s" % (str(offsetPerpToView)))
+
+            offset = self.constraint.constrain(offsetPerpToView, mouse_ray)
+
+            print("offset %s" % (str(offset)))
+
+
+            newProjMatrix = mathutils.Matrix.Translation(offset) @ self.startControlProj
+
+            print("newProjMatrix %s" % (str(newProjMatrix)))
+
+            self.control.updateProjectionMatrix(context, newProjMatrix)
+
+
+
+
+            # projOrigin = self.startControlProj.col[3].to_3d()
+
+            # print("projOrigin %s" % (str(projOrigin)))
+            
+            # startPos = self.startControlProj @ self.posControl
+            # fixedPos = self.startControlProj @ -self.posControl
+            # startOrigin = self.startControlProj.col[3].to_3d()
+
+            # print("startPos %s" % (str(startPos)))
+            # print("fixedPos %s" % (str(fixedPos)))
+            # print("startOrigin %s" % (str(startOrigin)))
+
+            # newPos = startPos + offset
+
+            # print("newPos %s" % (str(newPos)))
+            
+            # newControlOrigin = (newPos + fixedPos) / 2
+
+            # print("newControlOrigin %s" % (str(newControlOrigin)))
+            
+            # newPosOffset = newPos - newControlOrigin
+            # w2Proj = self.startControlProj.copy()
+            # w2Proj.invert()
+            # newPosOffsetProj = w2Proj @ (newPosOffset + startOrigin)
+
+            # print("newPosOffsetProj %s" % (str(newPosOffsetProj)))
+            
+            
+            # i = self.startControlProj.col[0].to_3d()
+            # j = self.startControlProj.col[1].to_3d()
+            # k = self.startControlProj.col[2].to_3d()
+
+            # print("i %s" % (str(i)))
+            # print("j %s" % (str(j)))
+            # print("k %s" % (str(k)))
+
+            
+            # newI = i.copy() if self.posControl.x == 0 else i * newPosOffsetProj.x / self.posControl.x
+            # newJ = j.copy() if self.posControl.y == 0 else j * newPosOffsetProj.y / self.posControl.y
+            # newK = k.copy() if self.posControl.z == 0 else j * newPosOffsetProj.z / self.posControl.z
+
+
+            # newI = newI.to_4d()
+            # newI.w = 0
+            # newJ = newJ.to_4d()
+            # newJ.w = 0
+            # newK = newK.to_4d()
+            # newK.w = 0
+            # newControlOrigin = newControlOrigin.to_4d()
+            
+            # newProjMatrix = mathutils.Matrix((newI, newJ, newK, newControlOrigin))
+            # newProjMatrix.transpose()
+
+            # print("newProjMatrix %s" % (str(newProjMatrix)))
+
+            # self.control.updateProjectionMatrix(context, newProjMatrix)
+
+            return True
+        return False
