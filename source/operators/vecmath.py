@@ -386,17 +386,17 @@ def unitTorus(radius = 1, ring_radius = .2, segs_u = 16, segs_v = 8):
             q10 = mathutils.Quaternion(tan1, math.radians(360 * j / segs_v))
             q11 = mathutils.Quaternion(tan1, math.radians(360 * (j + 1) / segs_v))
             
-            m00 = q00.to_matrix()
-            m01 = q01.to_matrix()
-            m10 = q10.to_matrix()
-            m11 = q11.to_matrix()
+            # m00 = q00.to_matrix()
+            # m01 = q01.to_matrix()
+            # m10 = q10.to_matrix()
+            # m11 = q11.to_matrix()
 
 #            print("m00 %s" % (str(m00)))
             
-            p00 = m00 @ dir0 + c0
-            p01 = m01 @ dir0 + c0
-            p10 = m10 @ dir1 + c1
-            p11 = m11 @ dir1 + c1
+            # p00 = m00 @ dir0 + c0
+            # p01 = m01 @ dir0 + c0
+            # p10 = m10 @ dir1 + c1
+            # p11 = m11 @ dir1 + c1
 
 #            print("p00 %s" % (str(p00)))
             
@@ -404,6 +404,11 @@ def unitTorus(radius = 1, ring_radius = .2, segs_u = 16, segs_v = 8):
             # p01 = q01 @ dir0 @ q01.conjugated() + c0
             # p10 = q10 @ dir1 @ q10.conjugated() + c1
             # p11 = q11 @ dir1 @ q11.conjugated() + c1
+
+            p00 = q00 @ dir0 + c0
+            p01 = q01 @ dir0 + c0
+            p10 = q10 @ dir1 + c1
+            p11 = q11 @ dir1 + c1
             
             vu = p10 - p00
             vv = p01 - p00
