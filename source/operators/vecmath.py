@@ -353,6 +353,89 @@ def unitSphere(segs_lat, segs_long):
     return (coords, normals, uvs)
     
 
+def unitTorus(radius = 1, ring_radius = .2, segs_u = 16, segs_v = 8):
+    coords = []
+    normals = []
+    uvs = []
+
+    print("--Build torus")
+
+    for i in range(segs_u):
+        cx0 = math.sin(math.radians(360 * i / segs_u)) * radius
+        cy0 = math.cos(math.radians(360 * i / segs_u)) * radius
+        cx1 = math.sin(math.radians(360 * (i + 1) / segs_u)) * radius
+        cy1 = math.cos(math.radians(360 * (i + 1) / segs_u)) * radius
+
+        c0 = mathutils.Vector((cx0, cy0, 0))
+        c1 = mathutils.Vector((cx1, cy1, 0))
+
+#        print("c0 %s" % (str(c0)))
+
+        for j in range(segs_v):
+            dir0 = c0 * ring_radius / c0.magnitude
+            dir1 = c1 * ring_radius / c1.magnitude
+            
+            tan0 = dir0.cross(vecZ)
+            tan1 = dir1.cross(vecZ)
+
+#            print("dir0 %s" % (str(dir0)))
+#            print("tan0 %s" % (str(tan0)))
+
+            q00 = mathutils.Quaternion(tan0, math.radians(360 * j / segs_v))
+            q01 = mathutils.Quaternion(tan0, math.radians(360 * (j + 1) / segs_v))
+            q10 = mathutils.Quaternion(tan1, math.radians(360 * j / segs_v))
+            q11 = mathutils.Quaternion(tan1, math.radians(360 * (j + 1) / segs_v))
+            
+            m00 = q00.to_matrix()
+            m01 = q01.to_matrix()
+            m10 = q10.to_matrix()
+            m11 = q11.to_matrix()
+
+#            print("m00 %s" % (str(m00)))
+            
+            p00 = m00 @ dir0 + c0
+            p01 = m01 @ dir0 + c0
+            p10 = m10 @ dir1 + c1
+            p11 = m11 @ dir1 + c1
+
+#            print("p00 %s" % (str(p00)))
+            
+            # p00 = q00 @ dir0 @ q00.conjugated() + c0
+            # p01 = q01 @ dir0 @ q01.conjugated() + c0
+            # p10 = q10 @ dir1 @ q10.conjugated() + c1
+            # p11 = q11 @ dir1 @ q11.conjugated() + c1
+            
+            vu = p10 - p00
+            vv = p01 - p00
+            norm = vu.cross(vv)
+            norm.normalize()
+            
+            uv00 = mathutils.Vector((i / segs_u, j / segs_v))
+            uv10 = mathutils.Vector(((i + 1) / segs_u, j / segs_v))
+            uv01 = mathutils.Vector((i / segs_u, (j + 1) / segs_v))
+            uv11 = mathutils.Vector(((i + 1) / segs_u, (j + 1) / segs_v))
+        
+            coords.append(p00)
+            coords.append(p10)
+            coords.append(p11)
+
+            coords.append(p00)
+            coords.append(p11)
+            coords.append(p01)
+            
+            for k in range(6):
+                normals.append(norm)
+            
+            uvs.append(uv00)
+            uvs.append(uv10)
+            uvs.append(uv11)
+            
+            uvs.append(uv00)
+            uvs.append(uv11)
+            uvs.append(uv01)
+
+    return (coords, normals, uvs)
+
 
 class Axis(Enum):
     X = 1

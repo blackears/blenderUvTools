@@ -80,6 +80,7 @@ class HandleBodyCube(HandleBody):
         super(HandleBodyCube, self).__init__(handle, transform, color, colorDrag)
     
         self.coords, normals, uvs = unitCube()
+#        self.coords, normals, uvs = unitTorus()
         
         self.shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
         self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": self.coords})
@@ -328,9 +329,6 @@ class HandleTranslate(Handle):
         else:
             if self.dragging:
                 self.dragging = False
-                # self.drag_offset = None
-
-                #self.mesh_tracker.stretch(self.move_amount, self.dir, self.face, True)
                 return True
                 
         return False
@@ -361,66 +359,6 @@ class HandleTranslate(Handle):
             print("newProjMatrix %s" % (str(newProjMatrix)))
 
             self.control.updateProjectionMatrix(context, newProjMatrix)
-
-
-
-
-            # projOrigin = self.startControlProj.col[3].to_3d()
-
-            # print("projOrigin %s" % (str(projOrigin)))
-            
-            # startPos = self.startControlProj @ self.posControl
-            # fixedPos = self.startControlProj @ -self.posControl
-            # startOrigin = self.startControlProj.col[3].to_3d()
-
-            # print("startPos %s" % (str(startPos)))
-            # print("fixedPos %s" % (str(fixedPos)))
-            # print("startOrigin %s" % (str(startOrigin)))
-
-            # newPos = startPos + offset
-
-            # print("newPos %s" % (str(newPos)))
-            
-            # newControlOrigin = (newPos + fixedPos) / 2
-
-            # print("newControlOrigin %s" % (str(newControlOrigin)))
-            
-            # newPosOffset = newPos - newControlOrigin
-            # w2Proj = self.startControlProj.copy()
-            # w2Proj.invert()
-            # newPosOffsetProj = w2Proj @ (newPosOffset + startOrigin)
-
-            # print("newPosOffsetProj %s" % (str(newPosOffsetProj)))
-            
-            
-            # i = self.startControlProj.col[0].to_3d()
-            # j = self.startControlProj.col[1].to_3d()
-            # k = self.startControlProj.col[2].to_3d()
-
-            # print("i %s" % (str(i)))
-            # print("j %s" % (str(j)))
-            # print("k %s" % (str(k)))
-
-            
-            # newI = i.copy() if self.posControl.x == 0 else i * newPosOffsetProj.x / self.posControl.x
-            # newJ = j.copy() if self.posControl.y == 0 else j * newPosOffsetProj.y / self.posControl.y
-            # newK = k.copy() if self.posControl.z == 0 else j * newPosOffsetProj.z / self.posControl.z
-
-
-            # newI = newI.to_4d()
-            # newI.w = 0
-            # newJ = newJ.to_4d()
-            # newJ.w = 0
-            # newK = newK.to_4d()
-            # newK.w = 0
-            # newControlOrigin = newControlOrigin.to_4d()
-            
-            # newProjMatrix = mathutils.Matrix((newI, newJ, newK, newControlOrigin))
-            # newProjMatrix.transpose()
-
-            # print("newProjMatrix %s" % (str(newProjMatrix)))
-
-            # self.control.updateProjectionMatrix(context, newProjMatrix)
 
             return True
         return False
