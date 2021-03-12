@@ -352,17 +352,17 @@ class HandleTranslate(Handle):
             startPointOffset = self.drag_start_pos - mouse_near_origin
             offsetPerpToView = startPointOffset.project(mouse_ray) - startPointOffset
 
-            print("posControl %s" % (str(self.posControl)))
-            print("offsetPerpToView %s" % (str(offsetPerpToView)))
+            # print("posControl %s" % (str(self.posControl)))
+            # print("offsetPerpToView %s" % (str(offsetPerpToView)))
 
             offset = self.constraint.constrain(offsetPerpToView, mouse_ray)
 
-            print("offset %s" % (str(offset)))
+#            print("offset %s" % (str(offset)))
 
 
             newProjMatrix = mathutils.Matrix.Translation(offset) @ self.startControlProj
 
-            print("newProjMatrix %s" % (str(newProjMatrix)))
+            #print("newProjMatrix %s" % (str(newProjMatrix)))
 
             self.control.updateProjectionMatrix(context, newProjMatrix)
 
@@ -371,18 +371,94 @@ class HandleTranslate(Handle):
 
 
 class HandleRotateAxis(Handle):
-    def __init__(self, control, transform, axis):
+    def __init__(self, control, transform, axis, axisLocal):
         
         constraint = HandleConstraintPlane(axis)
         
+        self.axisLocal = axisLocal
         self.control = control
         xform = mathutils.Matrix.Diagonal(mathutils.Vector((.05, .05, .05, 1)))
         body = HandleBodyTorus(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
         
         super().__init__(transform, body, constraint)
 
+    
     def mouse_click(self, context, event):
+        if event.value == "PRESS":
+            if not self.dragging:
+                region = context.region
+                rv3d = context.region_data
+
+                mouse_pos_2d = (event.mouse_region_x, event.mouse_region_y)
+                mouse_ray = view3d_utils.region_2d_to_vector_3d(region, rv3d, mouse_pos_2d)
+                mouse_near_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, mouse_pos_2d)
+
+                hit = self.body.intersect(mouse_near_origin, mouse_ray)
+                if hit != None:
+                    self.dragging = True
+                    self.drag_start_pos = hit
+                    
+                    #Structure of original projection matrix
+                    self.startControlProj = self.control.controlMtx.copy()
+                    
+                    return True
+        else:
+            if self.dragging:
+                self.dragging = False
+                return True
+                
         return False
 
     def mouse_move(self, context, event):
+        if self.dragging:
+            region = context.region
+            rv3d = context.region_data
+
+            mouse_pos_2d = (event.mouse_region_x, event.mouse_region_y)
+            mouse_ray = view3d_utils.region_2d_to_vector_3d(region, rv3d, mouse_pos_2d)
+            mouse_near_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, mouse_pos_2d)
+
+            #calc offset in 3d space perpendicular to view direction
+            startPointOffset = self.drag_start_pos - mouse_near_origin
+            offsetPerpToView = startPointOffset.project(mouse_ray) - startPointOffset
+
+            # print("posControl %s" % (str(self.posControl)))
+            # print("offsetPerpToView %s" % (str(offsetPerpToView)))
+
+            offset = self.constraint.constrain(offsetPerpToView, mouse_ray)
+
+            # print("offset %s" % (str(offset)))
+            origin = self.startControlProj.col[3].xyz
+
+            v0 = self.drag_start_pos - origin
+            v1 = (self.drag_start_pos + offset) - origin
+            
+            v0.normalize()
+            v1.normalize()
+
+            print("v0 %s" % (str(v0)))
+            print("v1 %s" % (str(v1)))
+
+            vc = v0.cross(v1)
+            print("vc %s" % (str(vc)))
+            
+            print("vc mag %s" % (vc.magnitude))
+            
+            angle = math.asin(vc.magnitude)
+
+            print("angle %s" % (str(angle)))
+            
+            axisWorld = self.constraint.planeNormal
+            if vc.dot(axisWorld) < 0:
+                angle = -angle
+            
+            mRot = mathutils.Matrix.Rotation(angle, 4, self.axisLocal)
+
+            newProjMatrix = self.startControlProj @ mRot
+
+            # print("newProjMatrix %s" % (str(newProjMatrix)))
+
+            self.control.updateProjectionMatrix(context, newProjMatrix)
+
+            return True
         return False

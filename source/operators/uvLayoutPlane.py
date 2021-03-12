@@ -50,9 +50,9 @@ class UvPlaneControl:
 
         self.handle11 = HandleTranslate(self, mathutils.Matrix(), HandleConstraintOmni(), vecZero)
 
-        self.handleRotX = HandleRotateAxis(self, mathutils.Matrix.Translation(vecZero), vecX)
-        self.handleRotY = HandleRotateAxis(self, mathutils.Matrix.Translation(vecZero), vecY)
-        self.handleRotZ = HandleRotateAxis(self, mathutils.Matrix.Translation(vecZero), vecZ)
+        self.handleRotX = HandleRotateAxis(self, mathutils.Matrix.Translation(vecZero), vecX, vecX)
+        self.handleRotY = HandleRotateAxis(self, mathutils.Matrix.Translation(vecZero), vecY, vecY)
+        self.handleRotZ = HandleRotateAxis(self, mathutils.Matrix.Translation(vecZero), vecZ, vecZ)
 
         
         self.handle00.body.color = (0, 0, 1, 1)
