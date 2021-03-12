@@ -70,47 +70,26 @@ class HandleBody:
         self.dragging = False
 
     def draw(self, context, dragging):
-        pass
-
-    def intersects(self, handle, pickOrigin, pickRay):
-        return False
-
-class HandleBodyCube(HandleBody):
-    def __init__(self, handle, transform, color, colorDrag):
-        super(HandleBodyCube, self).__init__(handle, transform, color, colorDrag)
-    
-        self.coords, normals, uvs = unitCube()
-#        self.coords, normals, uvs = unitTorus()
-        
-        self.shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
-        self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": self.coords})
-
-        # self.shader = gpu.shader.from_builtin('3D_FLAT_COLOR')
-        # colors = [mathutils.Vector((1, 1, .5, 1)) for i in range(len(coords))]
-        # self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": coords, "color": colors})
-        
-        
-    def draw(self, context, dragging):
-#        print("  Drawing cube h body")
-        
+       
         bgl.glEnable(bgl.GL_DEPTH_TEST)
         
         gpu.matrix.push()
         
         gpu.matrix.multiply_matrix(self.transform)
         if dragging:
-#            self.shader.uniform_float("color", (1, 1, 0, 1))
             self.shader.uniform_float("color", self.colorDrag)
         else:
             self.shader.uniform_float("color", self.color)
-#            self.shader.uniform_float("color", (1, 0, 1, 1))
         self.batchShape.draw(self.shader)
 
         gpu.matrix.pop()
             
         bgl.glDisable(bgl.GL_DEPTH_TEST)
         
-        
+    def intersects(self, handle, pickOrigin, pickRay):
+        return False
+
+
     def intersect(self, pickOrigin, pickRay):
         l2w = self.handle.transform @ self.transform
         
@@ -128,7 +107,34 @@ class HandleBodyCube(HandleBody):
                 return hit
             
         return None
+        
 
+class HandleBodyCube(HandleBody):
+    def __init__(self, handle, transform, color, colorDrag):
+        super().__init__(handle, transform, color, colorDrag)
+    
+        self.coords, normals, uvs = unitCube()
+#        self.coords, normals, uvs = unitTorus()
+        
+        self.shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+        self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": self.coords})
+
+        # self.shader = gpu.shader.from_builtin('3D_FLAT_COLOR')
+        # colors = [mathutils.Vector((1, 1, .5, 1)) for i in range(len(coords))]
+        # self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": coords, "color": colors})
+        
+        
+
+class HandleBodyTorus(HandleBody):
+    def __init__(self, handle, transform, color, colorDrag):
+        super().__init__(handle, transform, color, colorDrag)
+    
+        self.coords, normals, uvs = unitTorus(8)
+        
+        self.shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+        self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": self.coords})
+
+        
 #---------------------------
 
 
@@ -361,4 +367,22 @@ class HandleTranslate(Handle):
             self.control.updateProjectionMatrix(context, newProjMatrix)
 
             return True
+        return False
+
+
+class HandleRotateAxis(Handle):
+    def __init__(self, control, transform, axis):
+        
+        constraint = HandleConstraintPlane(axis)
+        
+        self.control = control
+        xform = mathutils.Matrix.Diagonal(mathutils.Vector((.05, .05, .05, 1)))
+        body = HandleBodyTorus(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
+        
+        super().__init__(transform, body, constraint)
+
+    def mouse_click(self, context, event):
+        return False
+
+    def mouse_move(self, context, event):
         return False

@@ -49,13 +49,22 @@ class UvPlaneControl:
         self.handle21 = HandleEdge(self, mathutils.Matrix.Translation(vecX), vecX, vecX)
 
         self.handle11 = HandleTranslate(self, mathutils.Matrix(), HandleConstraintOmni(), vecZero)
+
+        self.handleRotX = HandleRotateAxis(self, mathutils.Matrix.Translation(vecZero), vecX)
+        self.handleRotY = HandleRotateAxis(self, mathutils.Matrix.Translation(vecZero), vecY)
+        self.handleRotZ = HandleRotateAxis(self, mathutils.Matrix.Translation(vecZero), vecZ)
+
         
         self.handle00.body.color = (0, 0, 1, 1)
         self.handle02.body.color = (0, 1, 1, 1)
         self.handle20.body.color = (1, 0, 1, 1)
         self.handle22.body.color = (1, 1, 1, 1)
+
+        self.handleRotX.body.color = (1, 0, 0, 1)
+        self.handleRotY.body.color = (0, 1, 0, 1)
+        self.handleRotZ.body.color = (0, 0, 1, 1)
         
-        self.handles = [self.handle00, self.handle02, self.handle20, self.handle22, self.handle10, self.handle01, self.handle12, self.handle21, self.handle11]
+        self.handles = [self.handle00, self.handle02, self.handle20, self.handle22, self.handle10, self.handle01, self.handle12, self.handle21, self.handle11, self.handleRotX, self.handleRotY, self.handleRotZ]
         
         self.layoutHandles()
 
@@ -115,6 +124,15 @@ class UvPlaneControl:
         self.handle12.constraint.vector = j
 
         self.handle11.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero)
+        
+        self.handleRotX.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero) @ mathutils.Matrix.Rotation(math.radians(90), 4, 'Y')
+        self.handleRotX.constraint.vector = i
+        
+        self.handleRotY.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero) @ mathutils.Matrix.Rotation(math.radians(90), 4, 'X')
+        self.handleRotY.constraint.vector = j
+        
+        self.handleRotZ.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero)
+        self.handleRotZ.constraint.vector = k
         
     def updateProjectionMatrix(self, context, matrix):
         self.controlMtx = matrix
