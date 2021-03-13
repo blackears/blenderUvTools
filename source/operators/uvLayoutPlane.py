@@ -81,6 +81,45 @@ class UvPlaneControl:
             if handle.mouse_move(context, event):
                 consumed = True
                 break
+                
+        #update uvs
+        w2uv = self.controlMtx.inverted()
+        
+        print("self.controlMtx %s" % (str(self.controlMtx)))
+        print("w2uv %s" % (str(w2uv)))
+        
+        for obj in context.selected_objects:
+            if obj.type != "MESH":
+                continue
+
+            mesh = obj.data
+            l2w = obj.matrix_world
+            
+            if obj.mode == 'EDIT':
+                bm = bmesh.from_edit_mesh(mesh)
+
+                uv_layer = bm.loops.layers.uv.verify()
+                
+                for face in bm.faces:
+                    if face.select:
+                        for loop in face.loops:
+                            loop_uv = loop[uv_layer]
+                            # use xy position of the vertex as a uv coordinate
+                            #loop_uv.uv = loop.vert.co.xy
+                            
+                            # co = loop.vert.co
+                            # pos = mathutils.Vector((co.x, co.y, 0))
+
+                            print("loop.vert.co %s" % (str(loop.vert.co)))
+                            
+                            uvPos = w2uv @ loop.vert.co
+                            
+                            print("worldPos %s" % (str(uvPos)))
+                            loop_uv.uv = uvPos.xy
+
+                bmesh.update_edit_mesh(mesh)
+                
+                
         return consumed
 
     def mouse_click(self, context, event):
@@ -139,12 +178,9 @@ class UvPlaneControl:
         self.layoutHandles()
         redraw_all_viewports(context)
         
-    # def cancelLayout(self, matrix):
-        # pass
 
     def findTangent(self, norm):
         if 1 - norm.normalized().dot(vecZ) < .0001:
-#        if norm.x == 0 and norm.y == 0:
             return vecX.copy()
             
         tan = norm.cross(vecZ)

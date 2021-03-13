@@ -7,7 +7,7 @@ preview_collections = {}
 #---------------------------
 
 
-class UvToolsPanel(bpy.types.Panel):
+class UvToolsObjectPanel(bpy.types.Panel):
 
     """Properties Panel for the Uv Tools"""
     bl_label = "Uv Tools"
@@ -15,6 +15,44 @@ class UvToolsPanel(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_context = "objectmode"
+#    bl_context = "mesh_edit"
+    bl_category = "Kitfox"
+
+        
+
+    def draw(self, context):
+        layout = self.layout
+
+        scene = context.scene
+        settings = scene.uv_brush_props
+        
+        pcoll = preview_collections["main"]
+        
+        
+        col = layout.column();
+        col.operator("kitfox.uv_brush_operator", text="Uv Brush", icon_value = pcoll["uvBrush"].icon_id)
+        
+        col.prop(settings, "radius")
+        col.prop(settings, "strength")
+        col.prop(settings, "use_pressure")
+        
+        layout.separator()
+
+        col = layout.column();
+        col.operator("kitfox.uv_plane_layout_op", text="Uv Plane Project", icon_value = pcoll["uvBrush"].icon_id)
+        
+#---------------------------
+
+
+class UvToolsEditPanel(bpy.types.Panel):
+
+    """Properties Panel for the Uv Tools"""
+    bl_label = "Uv Tools"
+    bl_idname = "OBJECT_PT_uv_tools_props"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+#    bl_context = "objectmode"
+    bl_context = "mesh_edit"
     bl_category = "Kitfox"
 
         
@@ -60,11 +98,13 @@ def register():
     preview_collections["main"] = pcoll
 
     #Register tools
-    bpy.utils.register_class(UvToolsPanel)
+    bpy.utils.register_class(UvToolsObjectPanel)
+    bpy.utils.register_class(UvToolsEditPanel)
 
 
 def unregister():
-    bpy.utils.unregister_class(UvToolsPanel)
+    bpy.utils.unregister_class(UvToolsObjectPanel)
+    bpy.utils.unregister_class(UvToolsEditPanel)
 
     
     #Unload icons
