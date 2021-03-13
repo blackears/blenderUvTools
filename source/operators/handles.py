@@ -382,6 +382,15 @@ class HandleRotateAxis(Handle):
         
         super().__init__(transform, body, constraint)
 
+    def draw(self, context):
+        super().draw(context)
+        
+        # gpu.matrix.push()
+        # gpu.matrix.multiply_matrix(self.transform)
+
+        # self.body.draw(context, self.dragging)
+        
+        # gpu.matrix.pop()
     
     def mouse_click(self, context, event):
         if event.value == "PRESS":
@@ -432,25 +441,35 @@ class HandleRotateAxis(Handle):
 
             v0 = self.drag_start_pos - origin
             v1 = (self.drag_start_pos + offset) - origin
+
+            print("v0 %s" % (str(v0)))
+            print("v1 %s" % (str(v1)))
             
             v0.normalize()
             v1.normalize()
 
-            print("v0 %s" % (str(v0)))
-            print("v1 %s" % (str(v1)))
+            print("v0 norm %s" % (str(v0)))
+            print("v1 norm %s" % (str(v1)))
+
+            angle = math.acos(v0.dot(v1))
 
             vc = v0.cross(v1)
-            print("vc %s" % (str(vc)))
+#            print("vc %s" % (str(vc)))
             
-            print("vc mag %s" % (vc.magnitude))
+#            print("vc mag %s" % (vc.magnitude))
             
-            angle = math.asin(vc.magnitude)
+#            angle = math.asin(vc.magnitude)
 
             print("angle %s" % (str(angle)))
             
+            print("vc %s" % (str(vc)))
             axisWorld = self.constraint.planeNormal
+            print("axisWorld %s" % (str(axisWorld)))
+            
             if vc.dot(axisWorld) < 0:
                 angle = -angle
+
+            print("vc.dot(axisWorld)) %s" % (str(vc.dot(axisWorld))))
             
             mRot = mathutils.Matrix.Rotation(angle, 4, self.axisLocal)
 

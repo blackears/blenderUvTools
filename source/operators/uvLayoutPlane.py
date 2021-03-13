@@ -126,13 +126,13 @@ class UvPlaneControl:
         self.handle11.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero)
         
         self.handleRotX.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero) @ mathutils.Matrix.Rotation(math.radians(90), 4, 'Y')
-        self.handleRotX.constraint.vector = i
+        self.handleRotX.constraint.planeNormal = i
         
         self.handleRotY.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero) @ mathutils.Matrix.Rotation(math.radians(90), 4, 'X')
-        self.handleRotY.constraint.vector = j
+        self.handleRotY.constraint.planeNormal = j
         
         self.handleRotZ.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero)
-        self.handleRotZ.constraint.vector = k
+        self.handleRotZ.constraint.planeNormal = k
         
     def updateProjectionMatrix(self, context, matrix):
         self.controlMtx = matrix
