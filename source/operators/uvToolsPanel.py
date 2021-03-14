@@ -7,39 +7,39 @@ preview_collections = {}
 #---------------------------
 
 
-class UvToolsObjectPanel(bpy.types.Panel):
+# class UvToolsObjectPanel(bpy.types.Panel):
 
-    """Properties Panel for the Uv Tools"""
-    bl_label = "Uv Tools"
-    bl_idname = "OBJECT_PT_uv_tools_props"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_context = "objectmode"
-#    bl_context = "mesh_edit"
-    bl_category = "Kitfox"
+    # """Properties Panel for the Uv Tools"""
+    # bl_label = "Uv Tools"
+    # bl_idname = "OBJECT_PT_uv_object_tools_props"
+    # bl_space_type = 'VIEW_3D'
+    # bl_region_type = 'UI'
+    # bl_context = "objectmode"
+# #    bl_context = "mesh_edit"
+    # bl_category = "Kitfox"
 
         
 
-    def draw(self, context):
-        layout = self.layout
+    # def draw(self, context):
+        # layout = self.layout
 
-        scene = context.scene
-        settings = scene.uv_brush_props
+        # scene = context.scene
+        # settings = scene.uv_brush_props
         
-        pcoll = preview_collections["main"]
+        # pcoll = preview_collections["main"]
         
         
-        col = layout.column();
-        col.operator("kitfox.uv_brush_operator", text="Uv Brush", icon_value = pcoll["uvBrush"].icon_id)
+        # col = layout.column();
+        # col.operator("kitfox.uv_brush_operator", text="Uv Brush", icon_value = pcoll["uvBrush"].icon_id)
         
-        col.prop(settings, "radius")
-        col.prop(settings, "strength")
-        col.prop(settings, "use_pressure")
+        # col.prop(settings, "radius")
+        # col.prop(settings, "strength")
+        # col.prop(settings, "use_pressure")
         
-        layout.separator()
+        # layout.separator()
 
-        col = layout.column();
-        col.operator("kitfox.uv_plane_layout_op", text="Uv Plane Project", icon_value = pcoll["uvBrush"].icon_id)
+        # col = layout.column();
+        # col.operator("kitfox.uv_plane_layout_op", text="Uv Plane Project", icon_value = pcoll["uvBrush"].icon_id)
         
 #---------------------------
 
@@ -48,15 +48,20 @@ class UvToolsEditPanel(bpy.types.Panel):
 
     """Properties Panel for the Uv Tools"""
     bl_label = "Uv Tools"
-    bl_idname = "OBJECT_PT_uv_tools_props"
+    bl_idname = "OBJECT_PT_uv_edit_tools_props"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
 #    bl_context = "objectmode"
-    bl_context = "mesh_edit"
+#    bl_context = "mesh_edit"
     bl_category = "Kitfox"
 
         
 
+    @classmethod
+    def poll(cls, context):
+        obj = context.object
+        return obj != None and (obj.mode == 'EDIT' or obj.mode == 'OBJECT')
+        
     def draw(self, context):
         layout = self.layout
 
@@ -65,6 +70,7 @@ class UvToolsEditPanel(bpy.types.Panel):
         
         pcoll = preview_collections["main"]
         
+        #--------------------------------
         
         col = layout.column();
         col.operator("kitfox.uv_brush_operator", text="Uv Brush", icon_value = pcoll["uvBrush"].icon_id)
@@ -72,11 +78,15 @@ class UvToolsEditPanel(bpy.types.Panel):
         col.prop(settings, "radius")
         col.prop(settings, "strength")
         col.prop(settings, "use_pressure")
-        
+
+        #--------------------------------
         layout.separator()
+
+        planeLayout_props = scene.kitfox_uv_plane_layout_props
 
         col = layout.column();
         col.operator("kitfox.uv_plane_layout_op", text="Uv Plane Project", icon_value = pcoll["uvBrush"].icon_id)
+        col.prop(planeLayout_props, "selected_faces_only")
         
 #---------------------------
 
@@ -98,12 +108,12 @@ def register():
     preview_collections["main"] = pcoll
 
     #Register tools
-    bpy.utils.register_class(UvToolsObjectPanel)
+#    bpy.utils.register_class(UvToolsObjectPanel)
     bpy.utils.register_class(UvToolsEditPanel)
 
 
 def unregister():
-    bpy.utils.unregister_class(UvToolsObjectPanel)
+#    bpy.utils.unregister_class(UvToolsObjectPanel)
     bpy.utils.unregister_class(UvToolsEditPanel)
 
     

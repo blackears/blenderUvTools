@@ -17,14 +17,10 @@ from .handles import *
 from .blenderUtil import *
 
 class UvPlaneLayoutSettings(bpy.types.PropertyGroup):
-    brush_type : bpy.props.EnumProperty(
-        items=(
-            ('FIXED', "Fixed", "Normals are in a fixed direction"),
-            ('ATTRACT', "Attract", "Normals point toward target object"),
-            ('REPEL', "Repel", "Normals point away from target object"),
-            ('VERTEX', "Vertex", "Get normal values from mesh vertices")
-        ),
-        default='FIXED'
+    selected_faces_only : bpy.props.BoolProperty(
+        name="Seleccted Faces Only", 
+        description="Only change uvs of selected faces", 
+        default = True
     )
 
 
@@ -85,8 +81,10 @@ class UvPlaneControl:
         #update uvs
         w2uv = self.controlMtx.inverted()
         
-        print("self.controlMtx %s" % (str(self.controlMtx)))
-        print("w2uv %s" % (str(w2uv)))
+        props = context.scene.kitfox_uv_plane_layout_props
+        selected_faces_only = props.selected_faces_only
+#        print("self.controlMtx %s" % (str(self.controlMtx)))
+#        print("w2uv %s" % (str(w2uv)))
         
         for obj in context.selected_objects:
             if obj.type != "MESH":
@@ -97,27 +95,28 @@ class UvPlaneControl:
             
             if obj.mode == 'EDIT':
                 bm = bmesh.from_edit_mesh(mesh)
-
-                uv_layer = bm.loops.layers.uv.verify()
+            elif obj.mode == 'OBJECT':
+                bm = bmesh.new()
+                bm.from_mesh(mesh)
                 
-                for face in bm.faces:
-                    if face.select:
-                        for loop in face.loops:
-                            loop_uv = loop[uv_layer]
-                            # use xy position of the vertex as a uv coordinate
-                            #loop_uv.uv = loop.vert.co.xy
-                            
-                            # co = loop.vert.co
-                            # pos = mathutils.Vector((co.x, co.y, 0))
 
-                            print("loop.vert.co %s" % (str(loop.vert.co)))
-                            
-                            uvPos = w2uv @ loop.vert.co
-                            
-                            print("worldPos %s" % (str(uvPos)))
-                            loop_uv.uv = uvPos.xy
+            uv_layer = bm.loops.layers.uv.verify()
+            
+            for face in bm.faces:
+                if not selected_faces_only or face.select:
+                    for loop in face.loops:
+                        loop_uv = loop[uv_layer]
+                        
+                        uvPos = w2uv @ loop.vert.co
+                        
+                        #print("worldPos %s" % (str(uvPos)))
+                        loop_uv.uv = uvPos.xy
 
+            if obj.mode == 'EDIT':
                 bmesh.update_edit_mesh(mesh)
+            elif obj.mode == 'OBJECT':
+                bm.to_mesh(mesh)
+                bm.free()
                 
                 
         return consumed
