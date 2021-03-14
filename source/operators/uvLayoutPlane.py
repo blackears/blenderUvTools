@@ -179,7 +179,7 @@ class UvPlaneControl:
         
 
     def findTangent(self, norm):
-        if 1 - norm.normalized().dot(vecZ) < .0001:
+        if 1 - abs(norm.normalized().dot(vecZ)) < .0001:
             return vecX.copy()
             
         tan = norm.cross(vecZ)
@@ -188,33 +188,75 @@ class UvPlaneControl:
 
     def setFromMeshes(self, context):
     
-        #find polygon with largest area
-        bestArea = 0
+        obj = context.active_object
+        if obj == None or obj.type != 'MESH':
+            self.controlMtx = None        
+            return
+
+    
+        # #find polygon with largest area
+        # bestArea = 0
+        # bestNormal = None
+        # bestCenter = None
+        
+        
+        # # for obj in context.selected_objects:
+            # # if obj.type != "MESH":
+                # # continue
+
+        mesh = obj.data
+        l2w = obj.matrix_world
+        n2w = l2w.copy()
+        n2w.invert()
+        n2w.transpose()
+
+        mesh = obj.data
         bestNormal = None
         bestCenter = None
         
-        for obj in context.selected_objects:
-            if obj.type != "MESH":
-                continue
-
-            mesh = obj.data
-            l2w = obj.matrix_world
-            n2w = l2w.copy()
-            n2w.invert()
-            n2w.transpose()
+        
+        if obj.mode == 'EDIT':
+            bm = bmesh.from_edit_mesh(mesh)
+            print("active face idx " + str(bm.faces.active))
+            face = bm.faces.active
+            if face == None:
+                face = bm.faces[0]
+            bestNormal = n2w @ face.normal
+            bestCenter = l2w @ face.calc_center_median()
+        elif obj.mode == 'OBJECT':
+            print("active poly idx " + str(mesh.polygons.active))
+            bestPoly = mesh.polygons[mesh.polygons.active]
+            # if bestPoly == None:
+                # self.controlMtx = None        
+                # return 
+                
+            bestNormal = n2w @ bestPoly.normal
+            bestCenter = l2w @ bestPoly.center
             
-            bestPoly = None
-            
-            for p in mesh.polygons:
-                if bestArea < p.area:
-                    bestArea = p.area
-                    bestNormal = n2w @ p.normal
-                    bestCenter = l2w @ p.center
+        
+        # mesh.calc_loop_triangles()
+        # print("active poly idx " + str(mesh.polygons.active))
+        # bestPoly = mesh.polygons[mesh.polygons.active]
+        # if bestPoly == None:
+            # self.controlMtx = None        
+            # return 
+        
+        
+        # bestNormal = n2w @ bestPoly.normal
+        # bestCenter = l2w @ bestPoly.center
+        
+        # bestPoly = None
+        
+        # for p in mesh.polygons:
+            # if bestArea < p.area:
+                # bestArea = p.area
+                # bestNormal = n2w @ p.normal
+                # bestCenter = l2w @ p.center
                     
             
-        if bestNormal == None:
-            self.controlMtx = None        
-            return 
+        # if bestNormal == None:
+            # self.controlMtx = None        
+            # return 
             
         #print("bestNorm %s  bestCenter %s " % (str(bestNormal), str(bestCenter)))
             
@@ -259,7 +301,7 @@ class UvPlaneControl:
                     
                     faceV = l2poly @ v.co
                     
-                    print("mapping v %s -> %s " % (str(v.co), str(faceV)))
+#                    print("mapping v %s -> %s " % (str(v.co), str(faceV)))
            
                     minX = faceV.x if minX == None else min(faceV.x, minX)
                     maxX = faceV.x if maxX == None else max(faceV.x, maxX)

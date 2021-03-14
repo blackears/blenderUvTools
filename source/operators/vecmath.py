@@ -358,7 +358,7 @@ def unitTorus(radius = 1, ring_radius = .2, segs_u = 16, segs_v = 8):
     normals = []
     uvs = []
 
-    print("--Build torus")
+#    print("--Build torus")
 
     for i in range(segs_u):
         cx0 = math.sin(math.radians(360 * i / segs_u)) * radius
