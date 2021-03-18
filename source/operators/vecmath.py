@@ -303,17 +303,17 @@ def unitCone(segs = 16, radius = 1, cap = False):
     return unitCylinder(segs, radius, 0, cap, False)
 
 
-def unitSphere(segs_lat, segs_long):
+def unitSphere(segs_lat = 8, segs_long = 16):
     coords = []
     normals = []
     uvs = []
     
 
     for la in range(segs_lat):
-        z0 = math.sin(math.radians(90 - 180 * la / segs_lat))
-        z1 = math.sin(math.radians(90 - 180 * (la + 1) / segs_lat))
-        r0 = math.cos(math.radians(90 - 180 * la / segs_lat))
-        r1 = math.cos(math.radians(90 - 180 * (la + 1) / segs_lat))
+        z0 = math.cos(math.radians(180 * la / segs_lat))
+        z1 = math.cos(math.radians(180 * (la + 1) / segs_lat))
+        r0 = math.sin(math.radians(180 * la / segs_lat))
+        r1 = math.sin(math.radians(180 * (la + 1) / segs_lat))
         
         for lo in range(segs_long):
             cx0 = math.sin(math.radians(360 * lo / segs_long))
@@ -326,29 +326,31 @@ def unitSphere(segs_lat, segs_long):
             v01 = mathutils.Vector((cx0 * r1, cy0 * r1, z1))
             v11 = mathutils.Vector((cx1 * r1, cy1 * r1, z1))
             
-            coords.append(v00)
-            coords.append(v10)
-            coords.append(v11)
+            if la != 0:
+                coords.append(v00)
+                coords.append(v11)
+                coords.append(v10)
             
-            coords.append(v00)
-            coords.append(v11)
-            coords.append(v01)
+                normals.append(v00)
+                normals.append(v10)
+                normals.append(v11)
             
-            normals.append(v00)
-            normals.append(v10)
-            normals.append(v11)
+                uvs.append((lo / segs_long, la / segs_lat))
+                uvs.append(((lo + 1) / segs_long, la / segs_lat))
+                uvs.append(((lo + 1) / segs_long, (la + 1) / segs_lat))
             
-            normals.append(v00)
-            normals.append(v11)
-            normals.append(v01)
+            if la != segs_lat - 1:
+                coords.append(v00)
+                coords.append(v01)
+                coords.append(v11)
             
-            uvs.append((lo / segs_long, la / segs_lat))
-            uvs.append(((lo + 1) / segs_long, la / segs_lat))
-            uvs.append(((lo + 1) / segs_long, (la + 1) / segs_lat))
-            
-            uvs.append((lo / segs_long, la / segs_lat))
-            uvs.append(((lo + 1) / segs_long, (la + 1) / segs_lat))
-            uvs.append((lo / segs_long, (la + 1) / segs_lat))
+                normals.append(v00)
+                normals.append(v11)
+                normals.append(v01)
+                
+                uvs.append((lo / segs_long, la / segs_lat))
+                uvs.append(((lo + 1) / segs_long, (la + 1) / segs_lat))
+                uvs.append((lo / segs_long, (la + 1) / segs_lat))
             
     return (coords, normals, uvs)
     

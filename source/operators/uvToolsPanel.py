@@ -53,7 +53,7 @@ class UvToolsEditPanel(bpy.types.Panel):
     bl_region_type = 'UI'
 #    bl_context = "objectmode"
 #    bl_context = "mesh_edit"
-    bl_category = "Kitfox"
+    bl_category = "Kitfox - UV"
 
         
 

@@ -46,6 +46,10 @@ class UvPlaneControl:
 
         self.handle11 = HandleTranslate(self, mathutils.Matrix(), HandleConstraintOmni(), vecZero)
 
+        self.handleTransX = HandleTranslate(self, mathutils.Matrix(), HandleConstraintVector(vecX), vecX / 2)
+        self.handleTransY = HandleTranslate(self, mathutils.Matrix(), HandleConstraintVector(vecY), vecY / 2)
+        self.handleTransZ = HandleTranslate(self, mathutils.Matrix(), HandleConstraintVector(vecZ), vecZ / 2)
+
         self.handleRotX = HandleRotateAxis(self, mathutils.Matrix.Translation(vecZero), vecX, vecX)
         self.handleRotY = HandleRotateAxis(self, mathutils.Matrix.Translation(vecZero), vecY, vecY)
         self.handleRotZ = HandleRotateAxis(self, mathutils.Matrix.Translation(vecZero), vecZ, vecZ)
@@ -60,7 +64,7 @@ class UvPlaneControl:
         self.handleRotY.body.color = (0, 1, 0, 1)
         self.handleRotZ.body.color = (0, 0, 1, 1)
         
-        self.handles = [self.handle00, self.handle02, self.handle20, self.handle22, self.handle10, self.handle01, self.handle12, self.handle21, self.handle11, self.handleRotX, self.handleRotY, self.handleRotZ]
+        self.handles = [self.handle00, self.handle02, self.handle20, self.handle22, self.handle10, self.handle01, self.handle12, self.handle21, self.handle11, self.handleTransX, self.handleTransY, self.handleTransZ, self.handleRotX, self.handleRotY, self.handleRotZ]
         
         self.layoutHandles()
 
@@ -162,6 +166,15 @@ class UvPlaneControl:
         self.handle12.constraint.vector = j
 
         self.handle11.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero)
+
+        self.handleTransX.transform = self.controlMtx @ mathutils.Matrix.Translation(vecX / 2)
+        self.handleTransX.constraint.vector = i
+
+        self.handleTransY.transform = self.controlMtx @ mathutils.Matrix.Translation(vecY / 2)
+        self.handleTransY.constraint.vector = j
+
+        self.handleTransZ.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZ / 2)
+        self.handleTransZ.constraint.vector = k
         
         self.handleRotX.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero) @ mathutils.Matrix.Rotation(math.radians(90), 4, 'Y')
         self.handleRotX.constraint.planeNormal = i

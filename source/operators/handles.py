@@ -86,8 +86,8 @@ class HandleBody:
             
         bgl.glDisable(bgl.GL_DEPTH_TEST)
         
-    def intersects(self, handle, pickOrigin, pickRay):
-        return False
+#    def intersects(self, handle, pickOrigin, pickRay):
+#        return False
 
 
     def intersect(self, pickOrigin, pickRay):
@@ -104,6 +104,9 @@ class HandleBody:
             
             hit = intersect_triangle(p0w, p1w, p2w, pickOrigin, pickRay)
             if hit != None:
+                # print("hit p0:%s p1:%s p2:%s " % (str(p0w), str(p1w), str(p2w)))
+                # print("hit pickOrigin:%s pickRay:%s" % (str(pickOrigin), str(pickRay)))
+            
                 return hit
             
         return None
@@ -114,16 +117,21 @@ class HandleBodyCube(HandleBody):
         super().__init__(handle, transform, color, colorDrag)
     
         self.coords, normals, uvs = unitCube()
-#        self.coords, normals, uvs = unitTorus()
+        
+        self.shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+        self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": self.coords})
+        
+        
+
+class HandleBodySphere(HandleBody):
+    def __init__(self, handle, transform, color, colorDrag):
+        super().__init__(handle, transform, color, colorDrag)
+    
+        self.coords, normals, uvs = unitSphere()
         
         self.shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
         self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": self.coords})
 
-        # self.shader = gpu.shader.from_builtin('3D_FLAT_COLOR')
-        # colors = [mathutils.Vector((1, 1, .5, 1)) for i in range(len(coords))]
-        # self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": coords, "color": colors})
-        
-        
 
 class HandleBodyTorus(HandleBody):
     def __init__(self, handle, transform, color, colorDrag):
@@ -305,7 +313,8 @@ class HandleTranslate(Handle):
         
         self.control = control
         xform = mathutils.Matrix.Diagonal(mathutils.Vector((.05, .05, .05, 1)))
-        body = HandleBodyCube(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
+        body = HandleBodySphere(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
+#        body = HandleBodyCube(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
         
         #Location of handle in i, j, k coords of control's projection matrix
         self.posControl = posControl
