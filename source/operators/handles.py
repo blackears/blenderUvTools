@@ -76,6 +76,14 @@ class HandleBody:
         gpu.matrix.push()
         
         gpu.matrix.multiply_matrix(self.transform)
+        
+        # if True:
+            # mv = gpu.matrix.get_model_view_matrix()
+            # trans, rot, scale = mv.decompose()
+            # m = rot.to_matrix().to_4x4()
+            # m.translation = trans
+            # gpu.matrix.load_matrix(m)
+        
         if dragging:
             self.shader.uniform_float("color", self.colorDrag)
         else:

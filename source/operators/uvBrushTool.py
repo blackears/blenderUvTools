@@ -138,8 +138,8 @@ class UvTracker:
     
 class VertexTracker:
 
-    def __init__(self, vert_index):
-        self.vert_index = vert_index
+    def __init__(self, vert):
+        self.vert = vert
         self.uvInfo = []
         
     def considerUv(self, uv_in, dist_in, newUv_in):
@@ -148,6 +148,7 @@ class VertexTracker:
         for i in range(len(self.uvInfo)):
             map = self.uvInfo[i]
             
+            #Check if uv_in already has an entry for this vertex
             if map.uv == uv_in:
 #                print("found in map")
                 if map.dist > dist_in:
@@ -157,6 +158,7 @@ class VertexTracker:
                 
                 return
  
+        #Uv for this vertex not encountered yet.  Create new entry
         map = UvTracker(uv_in, dist_in, newUv_in)
         self.uvInfo.append(map)
                     
@@ -167,6 +169,8 @@ class VertexTracker:
             if map.uv == uv:
 #                print("Matched!")
                 return map.newUv
+        
+        return None
          
     def toString(self):
         print("    vert_index %d"  % (self.vert_index))
@@ -306,10 +310,19 @@ class UvBrushToolOperator(bpy.types.Operator):
         index = None
         
         if self.edit_object == None:
-            hit_object, location, normal, face_index, object, matrix = ray_cast(context, viewlayer, ray_origin, view_vector, self.edit_object)
+            hit_object, location, normal, face_index, object, matrix = ray_cast_scene(context, viewlayer, ray_origin, view_vector, self.edit_object)
         else:
-            hit_object, location, normal, index = self.edit_object.ray_cast(ray_origin, view_vector)
-            object = self.edit_object
+            if self.edit_object.mode == 'OBJECT':
+                hit_object, location, normal, index = self.edit_object.ray_cast(ray_origin, view_vector)
+                object = self.edit_object
+            if self.edit_object.mode == 'EDIT':
+                bm = bmesh.from_edit_mesh(self.edit_object.data)
+                tree = mathutils.bvhtree.BVHTree.FromBMesh(bm)
+                location, normal, index, distance = tree.ray_cast(ray_origin, view_vector)
+                hit_object = location != None
+                object = self.edit_object
+            
+            
             
 #        print("hit obj:%s" % (str(hit_object)))
         
@@ -327,15 +340,25 @@ class UvBrushToolOperator(bpy.types.Operator):
 #            print("--------Edit object uvs") 
             
             mesh = object.data
-#            mesh.polygons[face_index]
-            uvLayer = mesh.uv_layers.active.data
+            if self.edit_object.mode == 'EDIT':
+                bm = bmesh.from_edit_mesh(mesh)
+            elif self.edit_object.mode == 'OBJECT':
+                bm = bmesh.new()
+                bm.from_mesh(mesh)
             
-            vert_trackers = [VertexTracker(v.index) for v in mesh.vertices]
+#            uvLayer = mesh.uv_layers.active.data
+            uv_layer = bm.loops.layers.uv.active
             
-            for p in mesh.polygons:
-                v0pos = mathutils.Vector(mesh.vertices[p.vertices[0]].co)
-                v1pos = mathutils.Vector(mesh.vertices[p.vertices[1]].co)
-                v2pos = mathutils.Vector(mesh.vertices[p.vertices[2]].co)
+            vert_trackers = [VertexTracker(v) for v in bm.verts]
+            
+            for face in bm.faces:
+                l0 = face.loops[0]
+                l1 = face.loops[1]
+                l2 = face.loops[2]
+            
+                v0pos = l0.vert.co
+                v1pos = l1.vert.co
+                v2pos = l2.vert.co
                 
 #                print("v0pos: %s  v1pos: %s  v2pos: %s  " % (str(v0pos), str(v1pos), str(v2pos)))
 
@@ -344,23 +367,23 @@ class UvBrushToolOperator(bpy.types.Operator):
 
 #                print("v1: %s  v2: %s  norm: %s  " % (str(v1), str(v2), str(p.normal)))
 
-                dragP0 = project_point_onto_plane(self.stroke_trail[-1], v0pos, p.normal)
-                dragP1 = project_point_onto_plane(location, v0pos, p.normal)
+                dragP0 = project_point_onto_plane(self.stroke_trail[-1], v0pos, face.normal)
+                dragP1 = project_point_onto_plane(location, v0pos, face.normal)
 
 #                print("dragP0: %s  dragP1: %s" % (str(dragP0), str(dragP1)))
 
-                # l0 = mesh.loops[p.loop_indices[0]]
-                # l1 = mesh.loops[p.loop_indices[0]]
-                # l2 = mesh.loops[p.loop_indices[0]]
-                uv0 = uvLayer[p.loop_indices[0]].uv
-                uv1 = uvLayer[p.loop_indices[1]].uv
-                uv2 = uvLayer[p.loop_indices[2]].uv
+                uv0 = l0[uv_layer].uv
+                uv1 = l1[uv_layer].uv
+                uv2 = l2[uv_layer].uv
+                # uv0 = uvLayer[p.loop_indices[0]].uv
+                # uv1 = uvLayer[p.loop_indices[1]].uv
+                # uv2 = uvLayer[p.loop_indices[2]].uv
 
 #                print("uv0: %s  uv1: %s  uv2: %s" % (str(uv0), str(uv1), str(uv2)))
                 
             
-                locCo0 = express_in_basis(dragP0 - v0pos, v1, v2, p.normal)
-                locCo1 = express_in_basis(dragP1 - v0pos, v1, v2, p.normal)
+                locCo0 = express_in_basis(dragP0 - v0pos, v1, v2, face.normal)
+                locCo1 = express_in_basis(dragP1 - v0pos, v1, v2, face.normal)
 
 #                print("locCo0: %s  locCo1: %s" % (str(locCo0), str(locCo1)))
             
@@ -373,37 +396,37 @@ class UvBrushToolOperator(bpy.types.Operator):
             
 #                print("loop total:%d" % (p.loop_total))
             
-                for loop_idx in p.loop_indices:
+                for loop in face.loops:
                     
-                    loop = mesh.loops[loop_idx]
-                    pos = mathutils.Vector(mesh.vertices[loop.vertex_index].co)
+                    loop_uv = loop[uv_layer].uv
+                    v = loop.vert
+                    pos = v.co
                     dist = (pos - location).magnitude
                     if dist < brush_radius:
                         atten = 1 - dist / brush_radius
                         if use_pressure:
                             atten *= event.pressure
-#                        offset = -atten * dUv
-#                        uvLayer[loop_idx].uv -= atten * dUv
-                        vert_trackers[loop.vertex_index].considerUv(uvLayer[loop_idx].uv.copy(), dist, uvLayer[loop_idx].uv - atten * dUv)
+                        vert_trackers[v.index].considerUv(loop_uv.copy(), dist, loop_uv - atten * dUv)
 
             #Write new uvs back to mesh
             
-            # pp = pprint.PrettyPrinter(indent=4)
-            # pp.pprint(vert_trackers)
- #           print("vertTracker")
-#            for v in vert_trackers:
-#                print(v.toString())
-            
-            for p in mesh.polygons:
-                for loop_idx in p.loop_indices:
-                    loop = mesh.loops[loop_idx]
+            for face in bm.faces:
+                for loop in face.loops:
+#                    loop = mesh.loops[loop_idx]
 #                    print("lookup vertidx %s  uv %s " % (str(loop.vertex_index), str(uvLayer[loop_idx].uv)))
                     
-                    tracker = vert_trackers[loop.vertex_index]
-                    newUv = tracker.getNewUv(uvLayer[loop_idx].uv)
+                    loop_uv = loop[uv_layer].uv
+                    tracker = vert_trackers[loop.vert.index]
+                    newUv = tracker.getNewUv(loop_uv)
                     if newUv != None:
-                        uvLayer[loop_idx].uv = newUv
+                        loop[uv_layer].uv = newUv
                     
+
+            if self.edit_object.mode == 'EDIT':
+                bmesh.update_edit_mesh(mesh)
+            elif self.edit_object.mode == 'OBJECT':
+                bm.to_mesh(mesh)
+                bm.free()
                 
         
         if hit_object:        
@@ -425,7 +448,7 @@ class UvBrushToolOperator(bpy.types.Operator):
         ray_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, mouse_pos)
 
         viewlayer = bpy.context.view_layer
-        result, location, normal, index, object, matrix = ray_cast(context, viewlayer, ray_origin, view_vector)
+        result, location, normal, index, object, matrix = ray_cast_scene(context, viewlayer, ray_origin, view_vector)
         
         #Brush cursor display
         if result:
@@ -453,7 +476,7 @@ class UvBrushToolOperator(bpy.types.Operator):
             ray_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, mouse_pos)
 
             viewlayer = bpy.context.view_layer
-            result, location, normal, index, object, matrix = ray_cast(context, viewlayer, ray_origin, view_vector)
+            result, location, normal, index, object, matrix = ray_cast_scene(context, viewlayer, ray_origin, view_vector)
 
             if result == False or object.select_get() == False or object.type != 'MESH':
                 return {'PASS_THROUGH'}
@@ -489,24 +512,6 @@ class UvBrushToolOperator(bpy.types.Operator):
         if event.type in {'MIDDLEMOUSE', 'WHEELUPMOUSE', 'WHEELDOWNMOUSE'}:
             # allow navigation
             return {'PASS_THROUGH'}
-
-        # elif event.type in {'Z'}:
-            # # allow navigation
-            # if event.value == 'PRESS':
-                # v1 = mathutils.Vector((2, 0, 0))
-                # v2 = mathutils.Vector((2, 2, 0))
-                # n = mathutils.Vector((0, 0, 1))
-                # p = mathutils.Vector((-.924, .8901, 0))
-                
-                # c = express_in_basis(p, v1, v2, n)
-                # comb = c.x * v1 + c.y * v2 + c.z * n
-                
-                # print("v1 %s  v2 %s  n %s" % (str(v1), str(v2), str(n)))
-                # print("p %s" % (str(p)))
-                # print("c %s" % (str(c)))
-                # print("combine %s" % (str(comb)))
-                
-            # return {'RUNNING_MODAL'}
         
         elif event.type == 'MOUSEMOVE':
             self.mouse_move(context, event)
@@ -516,13 +521,7 @@ class UvBrushToolOperator(bpy.types.Operator):
             else:
                 return {'PASS_THROUGH'}
             
-#            return {'RUNNING_MODAL'}
-
         elif event.type == 'LEFTMOUSE':
-#            mouse_pos = (event.mouse_region_x, event.mouse_region_y)
-#            print("  pos %s" % str(mouse_pos))
-            
-#            return {'RUNNING_MODAL'}
             return self.mouse_click(context, event)
 
         elif event.type == 'RIGHTMOUSE':
@@ -602,75 +601,23 @@ class UvBrushToolOperator(bpy.types.Operator):
             return {'CANCELLED'}
 
 
-#-------------------------------------
-
-
-# class MyTool(bpy.types.WorkSpaceTool):
-    # bl_space_type = 'VIEW_3D'
-    # bl_context_mode = 'OBJECT'
-
-    # # The prefix of the idname should be your add-on name.
-    # bl_idname = "kitfox.uvBrush"
-    # bl_label = "Uv Brush"
-    # bl_description = (
-        # "This is a tooltip\n"
-        # "with multiple lines"
-    # )
-    
-# #    bl_icon = preview_collections["main"]["uvBrush"].icon_id
-    # bl_icon = "ops.generic.select_circle"
-    # bl_widget = None
-    # bl_keymap = (
-        # ("object.simple_operator", {"type": 'LEFTMOUSE', "value": 'PRESS'},
-         # {"properties": []}),
-    # )
-
-    # def draw_settings(context, layout, tool):
-# #        pcol = preview_collections["main"]
-# #        self.bl_icon = pcol["uvBrush"].icon_id
-    
-        # props = context.scene.uv_brush_props
-# #        props = tool.operator_properties("view3d.select_circle")
-        # layout.prop(props, "radius")
-        # layout.prop(props, "strength")
-        # layout.prop(props, "use_pressure")
 
 #---------------------------
 
 
 
 def register():
-    
-    #Load icons
-    # icon_path = "../icons"
-    # if __name__ == "__main__":
-        # icon_path = "../../source/icons"
-        
-    # icons_dir = os.path.join(os.path.dirname(__file__), icon_path)
-    
-# #    print("icons dir: " + str(icons_dir))
-    
-    # pcoll = bpy.utils.previews.new()
-    # pcoll.load("uvBrush", os.path.join(icons_dir, "uvBrush.png"), 'IMAGE')
-    # preview_collections["main"] = pcoll
 
     #Register tools
     bpy.utils.register_class(UvBrushToolSettings)
     bpy.utils.register_class(UvBrushToolOperator)
-#    bpy.utils.register_tool(MyTool, after={"builtin.scale_cage"}, separator=True, group=True)
 
     bpy.types.Scene.uv_brush_props = bpy.props.PointerProperty(type=UvBrushToolSettings)
 
 def unregister():
     bpy.utils.unregister_class(UvBrushToolSettings)
     bpy.utils.unregister_class(UvBrushToolOperator)
-#    bpy.utils.unregister_tool(MyTool)
 
-    
-    #Unload icons
-    # for pcoll in preview_collections.values():
-        # bpy.utils.previews.remove(pcoll)
-    # preview_collections.clear()
 
 if __name__ == "__main__":
     register()

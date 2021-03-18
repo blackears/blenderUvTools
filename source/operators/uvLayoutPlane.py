@@ -94,8 +94,9 @@ class UvPlaneControl:
             if obj.type != "MESH":
                 continue
 
-            mesh = obj.data
             l2w = obj.matrix_world
+            
+            mesh = obj.data
             
             if obj.mode == 'EDIT':
                 bm = bmesh.from_edit_mesh(mesh)
@@ -246,33 +247,6 @@ class UvPlaneControl:
             bestNormal = n2w @ bestPoly.normal
             bestCenter = l2w @ bestPoly.center
             
-        
-        # mesh.calc_loop_triangles()
-        # print("active poly idx " + str(mesh.polygons.active))
-        # bestPoly = mesh.polygons[mesh.polygons.active]
-        # if bestPoly == None:
-            # self.controlMtx = None        
-            # return 
-        
-        
-        # bestNormal = n2w @ bestPoly.normal
-        # bestCenter = l2w @ bestPoly.center
-        
-        # bestPoly = None
-        
-        # for p in mesh.polygons:
-            # if bestArea < p.area:
-                # bestArea = p.area
-                # bestNormal = n2w @ p.normal
-                # bestCenter = l2w @ p.center
-                    
-            
-        # if bestNormal == None:
-            # self.controlMtx = None        
-            # return 
-            
-        #print("bestNorm %s  bestCenter %s " % (str(bestNormal), str(bestCenter)))
-            
         #Build matrix from world space to face space
         tangent = self.findTangent(bestNormal)
         binormal = bestNormal.cross(tangent)
@@ -329,7 +303,6 @@ class UvPlaneControl:
         cx = (maxX + minX) / 2
         cy = (maxY + minY) / 2
         ctrlCenter = cx * tangent + cy * binormal + center
-#        ctrlCenter.w = 1
         #print("dx %s  dy %s  cx %s  cy %s " % (str(dx), str(dy), str(cx), str(cy)))
         #print("cx tan %s  cy tan %s" % (str(cx * tangent), str(cy * binormal)))
 
