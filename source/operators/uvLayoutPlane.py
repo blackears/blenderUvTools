@@ -31,6 +31,12 @@ class UvPlaneLayoutSettings(bpy.types.PropertyGroup):
         default = True
     )
 
+    clamp_to_basis : bpy.props.BoolProperty(
+        name="Clamp to Basis", 
+        description="Translations will be in basis vectors.  Has the visual effect of moving the origin of the UV projection without shifting the overall pattern.", 
+        default = False
+    )
+
 
 #---------------------------
 

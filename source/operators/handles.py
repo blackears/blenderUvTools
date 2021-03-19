@@ -358,6 +358,11 @@ class HandleTranslate(Handle):
         
     def mouse_move(self, context, event):
         if self.dragging:
+        
+            props = context.scene.kitfox_uv_plane_layout_props
+            clamp_to_basis = props.clamp_to_basis
+            
+        
             region = context.region
             rv3d = context.region_data
 
@@ -375,6 +380,22 @@ class HandleTranslate(Handle):
             offset = self.constraint.constrain(offsetPerpToView, mouse_ray)
 
 #            print("offset %s" % (str(offset)))
+
+            if clamp_to_basis:
+                uv2w = self.startControlProj
+                w2uv = uv2w.inverted()
+                
+                off = offset.to_4d()
+                off.w = 0
+                uvOff = w2uv @ off
+                
+                uvOff.x = math.floor(uvOff.x)
+                uvOff.y = math.floor(uvOff.y)
+                uvOff.z = math.floor(uvOff.z)
+                
+                offset = uv2w @ uvOff
+                offset = offset.to_3d()
+                
 
 
             newProjMatrix = mathutils.Matrix.Translation(offset) @ self.startControlProj
