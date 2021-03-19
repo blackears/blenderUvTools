@@ -17,8 +17,16 @@ from .handles import *
 from .blenderUtil import *
 
 class UvPlaneLayoutSettings(bpy.types.PropertyGroup):
+    init_layout : bpy.props.EnumProperty(
+        items=(
+            ('FACE', "Face", "Start with same UVs as active face"),
+            ('BOUNDS', "Bounds", "Fit to bounds of selected faces")
+        ),
+        default='FACE'
+    )
+
     selected_faces_only : bpy.props.BoolProperty(
-        name="Seleccted Faces Only", 
+        name="Selected Faces Only", 
         description="Only change uvs of selected faces", 
         default = True
     )
@@ -30,8 +38,14 @@ class UvPlaneControl:
     
     def __init__(self, context):
         self.controlMtx = None
+
+        props = context.scene.kitfox_uv_plane_layout_props
+        init_layout = props.init_layout
     
-        self.setFromMeshes(context)
+        if init_layout == 'FACE':
+            self.setProjFromActiveFace(context)
+        elif init_layout == 'BOUNDS':
+            self.setFromMeshes(context)
 
         
         self.handle00 = HandleCorner(self, mathutils.Matrix.Translation(-vecX - vecY), vecZ, -vecX - vecY)
@@ -65,6 +79,7 @@ class UvPlaneControl:
         self.handleRotZ.body.color = (0, 0, 1, 1)
         
         self.handles = [self.handle00, self.handle02, self.handle20, self.handle22, self.handle10, self.handle01, self.handle12, self.handle21, self.handle11, self.handleTransX, self.handleTransY, self.handleTransZ, self.handleRotX, self.handleRotY, self.handleRotZ]
+        
         
         self.layoutHandles()
 
@@ -199,6 +214,80 @@ class UvPlaneControl:
         tan = norm.cross(vecZ)
         tan.normalize()
         return tan
+
+    def setProjFromActiveFace(self, context):
+        obj = context.active_object
+        if obj == None or obj.type != 'MESH':
+            self.controlMtx = None        
+            return
+
+        bm = None
+        
+        if obj.mode == 'EDIT':
+            bm = bmesh.from_edit_mesh(obj.data)
+        elif obj.mode == 'OBJECT':
+            bm = bmesh.new()
+            bm.from_mesh(obj.data)
+
+#            print("active face idx " + str(bm.faces.active))
+        face = bm.faces.active
+        if face == None:
+            bm.faces.ensure_lookup_table()
+            face = bm.faces[0]
+
+        l2w = obj.matrix_world
+        n2w = l2w.copy()
+        n2w.invert()
+        n2w.transpose()
+            
+        bestNormal = n2w @ face.normal
+        bestCenter = l2w @ face.calc_center_median()
+
+        uv_layer = bm.loops.layers.uv.active
+
+        l0 = face.loops[0]
+        l1 = face.loops[1]
+        l2 = face.loops[2]
+
+        p0 = l2w @ face.verts[0].co
+        p1 = l2w @ face.verts[1].co
+        p2 = l2w @ face.verts[2].co
+        
+        p3 = p0 + bestNormal
+        
+        uv0 = l0[uv_layer].uv
+        uv1 = l1[uv_layer].uv
+        uv2 = l2[uv_layer].uv
+        
+        U = mathutils.Matrix((
+            (uv0.x, uv0.y, 0, 1),
+            (uv1.x, uv1.y, 0, 1),
+            (uv2.x, uv2.y, 0, 1),
+            (uv0.x, uv0.y, 1, 1)
+            ))
+        U.transpose()
+        print("mtx U " + str(U))
+        U.invert()
+        print("mtx U-1 " + str(U))
+
+        P = mathutils.Matrix((
+            (p0.x, p0.y, p0.z, 1),
+            (p1.x, p1.y, p1.z, 1),
+            (p2.x, p2.y, p2.z, 1),
+            (p3.x, p3.y, p3.z, 1)
+            ))
+        P.transpose()
+
+        print("mtx P " + str(P))
+
+        C = P @ U
+        self.controlMtx = C
+
+        print("mtx C " + str(C))
+
+        if obj.mode == 'OBJECT':
+            bm.free()
+        
 
     def setFromMeshes(self, context):
     

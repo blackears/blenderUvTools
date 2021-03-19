@@ -87,6 +87,7 @@ class UvToolsEditPanel(bpy.types.Panel):
         col = layout.column();
         col.operator("kitfox.uv_plane_layout_op", text="Uv Plane Project", icon_value = pcoll["uvBrush"].icon_id)
         col.prop(planeLayout_props, "selected_faces_only")
+        col.prop(planeLayout_props, "init_layout", expand = True)
         
 #---------------------------
 

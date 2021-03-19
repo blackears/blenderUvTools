@@ -260,10 +260,17 @@ class UvBrushToolOperator(bpy.types.Operator):
             if obj.type == 'MESH':
                 bm = map[obj]
                 
+                if obj.mode == 'OBJECT':
                 #self.edit_object
-                mesh = obj.data
-                bm.to_mesh(mesh)
-                mesh.update()
+                    mesh = obj.data
+                    bm.to_mesh(mesh)
+                    mesh.update()
+                elif obj.mode == 'EDIT':
+                    objBm = bmesh.from_edit_mesh(obj.data)
+                    #TODO: Somehow copy bm data to objBm
+                    
+                    #bm.clear()
+                    #bmesh.update_edit_mesh(obj.data)
         
     def history_undo_to_snapshot(self, context, idx):
         if idx < 0 or idx >= len(self.history):
@@ -524,14 +531,14 @@ class UvBrushToolOperator(bpy.types.Operator):
         elif event.type == 'LEFTMOUSE':
             return self.mouse_click(context, event)
 
-        elif event.type == 'RIGHTMOUSE':
-            mouse_pos = (event.mouse_region_x, event.mouse_region_y)
-            print("  pos %s" % str(mouse_pos))
+        # elif event.type == 'RIGHTMOUSE':
+            # mouse_pos = (event.mouse_region_x, event.mouse_region_y)
+            # print("  pos %s" % str(mouse_pos))
             
-            bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
-            self.show_cursor = False
+            # bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
+            # self.show_cursor = False
     
-            return {'FINISHED'}
+            # return {'FINISHED'}
             
         elif event.type in {'Z'}:
             if event.ctrl:
@@ -568,7 +575,7 @@ class UvBrushToolOperator(bpy.types.Operator):
                 context.scene.uv_brush_props.radius = brush_radius
             return {'RUNNING_MODAL'}
             
-        elif event.type in {'RIGHTMOUSE', 'ESC'}:
+        elif event.type == 'ESC':
             if event.value == 'RELEASE':
                 bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
                 self.history_restore_bookmark(context, 0)
@@ -576,7 +583,7 @@ class UvBrushToolOperator(bpy.types.Operator):
                 return {'CANCELLED'}
             return {'RUNNING_MODAL'}
 
-        return {'RUNNING_MODAL'}
+        return {'PASS_THROUGH'}
 
 #    def execute(self, context):
 #        print("execute SimpleOperator")
