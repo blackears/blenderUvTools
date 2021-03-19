@@ -127,8 +127,9 @@ class UvPlaneControl:
                     for loop in face.loops:
                         loop_uv = loop[uv_layer]
                         
-                        uvPos = w2uv @ loop.vert.co
+                        uvPos = w2uv @ l2w @ loop.vert.co
                         
+                        #print("worldPos %s" % (str(uvPos)))
                         #print("worldPos %s" % (str(uvPos)))
                         loop_uv.uv = uvPos.xy
 
@@ -253,11 +254,19 @@ class UvPlaneControl:
         p1 = l2w @ face.verts[1].co
         p2 = l2w @ face.verts[2].co
         
-        p3 = p0 + bestNormal
+        print("p0 " + str(p0))
+        print("p1 " + str(p1))
+        print("p2 " + str(p2))
+        
+        p3 = p0 - bestNormal
         
         uv0 = l0[uv_layer].uv
         uv1 = l1[uv_layer].uv
         uv2 = l2[uv_layer].uv
+
+        print("uv0 " + str(uv0))
+        print("uv1 " + str(uv1))
+        print("uv2 " + str(uv2))
         
         U = mathutils.Matrix((
             (uv0.x, uv0.y, 0, 1),
@@ -284,6 +293,10 @@ class UvPlaneControl:
         self.controlMtx = C
 
         print("mtx C " + str(C))
+        
+        CI = C.copy()
+        CI.invert()
+        print("mtx C-1 " + str(CI))
 
         if obj.mode == 'OBJECT':
             bm.free()
