@@ -70,19 +70,19 @@ class HandleBody:
         self.dragging = False
 
     def draw(self, context, dragging):
+
+        #Remove scaling component from handle transform
+        trans, rot, scale = self.handle.transform.decompose()
+        hM = mathutils.Matrix.Translation(trans) @ rot.to_matrix().to_4x4()
+        l2w = hM @ self.transform
+
        
         bgl.glEnable(bgl.GL_DEPTH_TEST)
         
         gpu.matrix.push()
         
-        gpu.matrix.multiply_matrix(self.transform)
+        gpu.matrix.multiply_matrix(l2w)
         
-        # if True:
-            # mv = gpu.matrix.get_model_view_matrix()
-            # trans, rot, scale = mv.decompose()
-            # m = rot.to_matrix().to_4x4()
-            # m.translation = trans
-            # gpu.matrix.load_matrix(m)
         
         if dragging:
             self.shader.uniform_float("color", self.colorDrag)
@@ -94,12 +94,11 @@ class HandleBody:
             
         bgl.glDisable(bgl.GL_DEPTH_TEST)
         
-#    def intersects(self, handle, pickOrigin, pickRay):
-#        return False
-
 
     def intersect(self, pickOrigin, pickRay):
-        l2w = self.handle.transform @ self.transform
+        trans, rot, scale = self.handle.transform.decompose()
+        hM = mathutils.Matrix.Translation(trans) @ rot.to_matrix().to_4x4()
+        l2w = hM @ self.transform
         
         for i in range(len(self.coords) // 3):
             p0 = self.coords[i * 3]
@@ -164,8 +163,8 @@ class Handle:
         self.dragging = False
 
     def draw(self, context):
-        gpu.matrix.push()
-        gpu.matrix.multiply_matrix(self.transform)
+        gpu.matrix.push()        
+        #gpu.matrix.multiply_matrix(self.transform)
 
         self.body.draw(context, self.dragging)
         
