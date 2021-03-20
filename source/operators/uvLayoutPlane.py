@@ -91,6 +91,7 @@ class UvPlaneControl:
         
         
         self.layoutHandles()
+        self.updateUvs(context)
 
         
     def __del__(self):
@@ -105,7 +106,10 @@ class UvPlaneControl:
             if handle.mouse_move(context, event):
                 consumed = True
                 break
+
+        return consumed
                 
+    def updateUvs(self, context):
         #update uvs
         w2uv = self.controlMtx.inverted()
         
@@ -149,7 +153,6 @@ class UvPlaneControl:
                 bm.free()
                 
                 
-        return consumed
 
     def mouse_click(self, context, event):
         consumed = False
@@ -214,6 +217,7 @@ class UvPlaneControl:
     def updateProjectionMatrix(self, context, matrix):
         self.controlMtx = matrix
         self.layoutHandles()
+        self.updateUvs(context)
         redraw_all_viewports(context)
         
 
@@ -343,31 +347,6 @@ class UvPlaneControl:
         if obj.mode == 'OBJECT':
             bm.free()
             
-        #Find bounds of selected faces
-        # bounds = None
-        # for obj in context.selected_objects:
-            # if obj.type != "MESH":
-                # continue
-
-            # mesh = obj.data
-            
-            # if obj.mode == 'EDIT':
-                # bm = bmesh.from_edit_mesh(obj.data)
-                # if bounds == None:
-                    # bounds = bmesh_bounds(bm, True, True)
-                # else:
-                    # bounds.include_bounds(bmesh_bounds(bm), True, True)
-                
-            # elif obj.mode == 'OBJECT':
-                # if bounds == None:
-                    # bounds = mesh_bounds(mesh, True, True)
-                # else:
-                    # bounds.include_bounds(mesh_bounds(mesh), True, True)
-                
-        # if bounds == None:
-            # return
-#        dBound = bounds.maxBound - bounds.minBound
-            
         #Grid projection
         scale = context.space_data.overlay.grid_scale
         center = snap_to_grid(activeCenter, scale)
@@ -377,14 +356,17 @@ class UvPlaneControl:
             i = vecY * scale
             j = vecZ * scale
             k = vecX * scale
+            center.x = activeCenter.x
         elif axis == Axis.Y:
             i = vecX * scale
             j = vecZ * scale
             k = vecY * scale
+            center.y = activeCenter.y
         elif axis == Axis.Z:
             i = vecX * scale
             j = vecY * scale
             k = vecZ * scale
+            center.z = activeCenter.z
 
         i = i.to_4d()
         i.w = 0
@@ -635,6 +617,30 @@ class UvLayoutPlaneOperator(bpy.types.Operator):
         if event.type in {'MIDDLEMOUSE', 'WHEELUPMOUSE', 'WHEELDOWNMOUSE'}:
             # allow navigation
             return {'PASS_THROUGH'}
+
+        elif event.type == 'UP_ARROW':
+            if event.value == 'PRESS':
+                m = mathutils.Matrix.Diagonal(mathutils.Vector((1, 2, 1, 1)))
+                self.control.updateProjectionMatrix(context, self.control.controlMtx @ m)
+            return {'RUNNING_MODAL'}
+
+        elif event.type == 'DOWN_ARROW':
+            if event.value == 'PRESS':
+                m = mathutils.Matrix.Diagonal(mathutils.Vector((1, .5, 1, 1)))
+                self.control.updateProjectionMatrix(context, self.control.controlMtx @ m)
+            return {'RUNNING_MODAL'}
+
+        elif event.type == 'RIGHT_ARROW':
+            if event.value == 'PRESS':
+                m = mathutils.Matrix.Diagonal(mathutils.Vector((2, 1, 1, 1)))
+                self.control.updateProjectionMatrix(context, self.control.controlMtx @ m)
+            return {'RUNNING_MODAL'}
+
+        elif event.type == 'LEFT_ARROW':
+            if event.value == 'PRESS':
+                m = mathutils.Matrix.Diagonal(mathutils.Vector((.5, 1, 1, 1)))
+                self.control.updateProjectionMatrix(context, self.control.controlMtx @ m)
+            return {'RUNNING_MODAL'}
 
         elif event.type == 'MOUSEMOVE':
             return self.mouse_move(context, event)
