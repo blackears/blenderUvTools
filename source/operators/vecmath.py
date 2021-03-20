@@ -653,81 +653,80 @@ class Bounds:
         include_point(bounds.maxBound)
     
     
-def mesh_bounds(obj, world = True):
+def mesh_bounds(obj, world = True, selected_faces_only = False):
     
     bounds = None
 
     # minCo = None
     # maxCo = None
     mesh = obj.data
-    
-    for v in mesh.vertices:
-        pos = mathutils.Vector(v.co)
-        if world:
-            pos = obj.matrix_world @ pos
-    
-#            print("pos " + str(pos))
 
-        if bounds == None:
-            bounds = Bounds(pos)
-        else:
-            bounds.include_point(pos)
+    for p in mesh.polygons:
+        if selected_faces_only and not p.select:
+            continue
+            
+        for vIdx in p.vertices:
+            v = mesh.vertices[vIdx]
+            pos = mathutils.Vector(v.co)
+            
+            if world:
+                pos = obj.matrix_world @ pos
+                
+            if bounds == None:
+                bounds = Bounds(pos)
+            else:
+                bounds.include_point(pos)
+
     
-        # if minCo == None:
-            # minCo = mathutils.Vector(pos)
-            # maxCo = mathutils.Vector(pos)
+    # for v in mesh.vertices:
+        # pos = mathutils.Vector(v.co)
+        # if world:
+            # pos = obj.matrix_world @ pos
+    
+        # if bounds == None:
+            # bounds = Bounds(pos)
         # else:
-            # minCo.x = min(minCo.x, pos.x)
-            # minCo.y = min(minCo.y, pos.y)
-            # minCo.z = min(minCo.z, pos.z)
-            # maxCo.x = max(maxCo.x, pos.x)
-            # maxCo.y = max(maxCo.y, pos.y)
-            # maxCo.z = max(maxCo.z, pos.z)
+            # bounds.include_point(pos)
+    
             
     return bounds
 
     
     
-def bmesh_bounds(obj, bmesh, world = True):
+def bmesh_bounds(obj, bmesh, world = True, selected_faces_only = False):
 
     bounds = None
     
-    for v in bmesh.verts:
-        pos = mathutils.Vector(v.co)
-        if world:
-            pos = obj.matrix_world @ pos
-    
-#            print("pos " + str(pos))
+    for f in bmesh.faces:
+        if selected_faces_only and not p.select:
+            continue
 
-        if bounds == None:
-            bounds = Bounds(pos)
-        else:
-            bounds.include_point(pos)
+        for v in f.verts:
+            pos = mathutils.Vector(v.co)
+            if world:
+                pos = obj.matrix_world @ pos
+        
+            if bounds == None:
+                bounds = Bounds(pos)
+            else:
+                bounds.include_point(pos)
+
+    
+    # for v in bmesh.verts:
+        # pos = mathutils.Vector(v.co)
+        # if world:
+            # pos = obj.matrix_world @ pos
+    
+# #            print("pos " + str(pos))
+
+        # if bounds == None:
+            # bounds = Bounds(pos)
+        # else:
+            # bounds.include_point(pos)
      
     return bounds
 
 
-    # minCo = None
-    # maxCo = None
-    
-    # for v in bmesh.verts:
-        # pos = mathutils.Vector(v.co)
-        # pos = obj.matrix_world @ pos
-    
-# #            print("pos " + str(pos))
-    
-        # if minCo == None:
-            # minCo = mathutils.Vector(pos)
-            # maxCo = mathutils.Vector(pos)
-        # else:
-            # minCo.x = min(minCo.x, pos.x)
-            # minCo.y = min(minCo.y, pos.y)
-            # minCo.z = min(minCo.z, pos.z)
-            # maxCo.x = max(maxCo.x, pos.x)
-            # maxCo.y = max(maxCo.y, pos.y)
-            # maxCo.z = max(maxCo.z, pos.z)
-            
-    # return (minCo, maxCo)
     
     
     

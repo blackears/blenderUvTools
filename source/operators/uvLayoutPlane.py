@@ -20,7 +20,8 @@ class UvPlaneLayoutSettings(bpy.types.PropertyGroup):
     init_layout : bpy.props.EnumProperty(
         items=(
             ('FACE', "Face", "Start with same UVs as active face"),
-            ('BOUNDS', "Bounds", "Fit to bounds of selected faces")
+            ('BOUNDS', "Bounds", "Fit to bounds of selected faces"),
+            ('GRID', "Grid", "Align UVs using grid of closest axis")
         ),
         default='FACE'
     )
@@ -52,6 +53,8 @@ class UvPlaneControl:
             self.setProjFromActiveFace(context)
         elif init_layout == 'BOUNDS':
             self.setFromMeshes(context)
+        elif init_layout == 'GRID':
+            self.setFromGrid(context)
 
         
         self.handle00 = HandleCorner(self, mathutils.Matrix.Translation(-vecX - vecY), vecZ, -vecX - vecY)
@@ -222,6 +225,7 @@ class UvPlaneControl:
         tan.normalize()
         return tan
 
+
     def setProjFromActiveFace(self, context):
         obj = context.active_object
         if obj == None or obj.type != 'MESH':
@@ -306,6 +310,92 @@ class UvPlaneControl:
 
         if obj.mode == 'OBJECT':
             bm.free()
+        
+
+    def setFromGrid(self, context):
+        obj = context.active_object
+        if obj == None or obj.type != 'MESH':
+            self.controlMtx = None        
+            return
+
+        #Find active face
+        bm = None
+        if obj.mode == 'EDIT':
+            bm = bmesh.from_edit_mesh(obj.data)
+        elif obj.mode == 'OBJECT':
+            bm = bmesh.new()
+            bm.from_mesh(obj.data)
+
+#            print("active face idx " + str(bm.faces.active))
+        face = bm.faces.active
+        if face == None:
+            bm.faces.ensure_lookup_table()
+            face = bm.faces[0]
+
+        l2w = obj.matrix_world
+        n2w = l2w.copy()
+        n2w.invert()
+        n2w.transpose()
+            
+        activeNormal = n2w @ face.normal
+        activeCenter = l2w @ face.calc_center_median()
+
+        if obj.mode == 'OBJECT':
+            bm.free()
+            
+        #Find bounds of selected faces
+        # bounds = None
+        # for obj in context.selected_objects:
+            # if obj.type != "MESH":
+                # continue
+
+            # mesh = obj.data
+            
+            # if obj.mode == 'EDIT':
+                # bm = bmesh.from_edit_mesh(obj.data)
+                # if bounds == None:
+                    # bounds = bmesh_bounds(bm, True, True)
+                # else:
+                    # bounds.include_bounds(bmesh_bounds(bm), True, True)
+                
+            # elif obj.mode == 'OBJECT':
+                # if bounds == None:
+                    # bounds = mesh_bounds(mesh, True, True)
+                # else:
+                    # bounds.include_bounds(mesh_bounds(mesh), True, True)
+                
+        # if bounds == None:
+            # return
+#        dBound = bounds.maxBound - bounds.minBound
+            
+        #Grid projection
+        scale = context.space_data.overlay.grid_scale
+        center = snap_to_grid(activeCenter, scale)
+        
+        axis = closest_axis(activeNormal)
+        if axis == Axis.X:
+            i = vecY * scale
+            j = vecZ * scale
+            k = vecX * scale
+        elif axis == Axis.Y:
+            i = vecX * scale
+            j = vecZ * scale
+            k = vecY * scale
+        elif axis == Axis.Z:
+            i = vecX * scale
+            j = vecY * scale
+            k = vecZ * scale
+
+        i = i.to_4d()
+        i.w = 0
+        j = j.to_4d()
+        j.w = 0
+        k = k.to_4d()
+        k.w = 0
+        h = center.to_4d()
+        
+        self.controlMtx = mathutils.Matrix((i, j, k, h))
+        self.controlMtx.transpose()
         
 
     def setFromMeshes(self, context):
