@@ -482,6 +482,40 @@ def calc_unit_scale(pos, region, rv3d):
     
     return 1 / viewport_offset.magnitude
 
+#return number of pixels tall a 1 unit sphere will be at the given position
+def dist_from_viewport_center(pos, region, rv3d):
+
+    center_2d = (region.x + region.width / 2, region.y + region.height / 2)
+#    view_ray = view3d_utils.region_2d_to_vector_3d(region, rv3d, center_2d)
+    view_near_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, center_2d)
+
+#    along_view = (pos - view_near_origin).project(view_ray)
+    along_view = pos - view_near_origin
+    return along_view.magnitude
+    
+
+def calc_unit_scale3(pos, region, rv3d):
+
+    w2win = rv3d.window_matrix @ rv3d.perspective_matrix @ rv3d.view_matrix
+
+    p0 = pos.to_4d()
+    p1 = (pos + vecZ).to_4d()
+
+    q0 = w2win @ p0
+    q1 = w2win @ p1
+    
+    q0 /= q0.w
+    q1 /= q1.w
+    
+    dq = q1 - q0
+    dq.z = 0
+    
+    print("p0 " + str(q0))
+    print("p1 " + str(q1))
+    print("dq " + str(dq))
+    
+    return dq.magnitude
+    
 
 #Returns scalar s to multiply line_dir by so that line_point + s * line_dir lies on plane
 # note that plane_norm does not need to be normalized

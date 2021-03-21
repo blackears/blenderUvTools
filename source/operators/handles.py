@@ -68,12 +68,24 @@ class HandleBody:
         self.color = color
         self.colorDrag = colorDrag        
         self.dragging = False
+        self.viewportScale = .2
 
     def draw(self, context, dragging):
 
-        #Remove scaling component from handle transform
+        #Replace scaling component from handle transform
         trans, rot, scale = self.handle.transform.decompose()
-        hM = mathutils.Matrix.Translation(trans) @ rot.to_matrix().to_4x4()
+        
+        region = context.region
+        rv3d = context.region_data
+        #unitScale = calc_unit_scale2(trans, region, rv3d)
+        unitScale = dist_from_viewport_center(trans, region, rv3d)
+        #unitScale = unitScale * unitScale
+        unitScale = 1 / unitScale
+#        print("unitScale " + str(unitScale))
+        viewport_scale = self.viewportScale / unitScale
+        mS = mathutils.Matrix.Diagonal((viewport_scale, viewport_scale, viewport_scale, 1))
+
+        hM = mathutils.Matrix.Translation(trans) @ rot.to_matrix().to_4x4() @ mS
         l2w = hM @ self.transform
 
        
@@ -95,9 +107,24 @@ class HandleBody:
         bgl.glDisable(bgl.GL_DEPTH_TEST)
         
 
-    def intersect(self, pickOrigin, pickRay):
+    def intersect(self, context, pickOrigin, pickRay):
+
         trans, rot, scale = self.handle.transform.decompose()
-        hM = mathutils.Matrix.Translation(trans) @ rot.to_matrix().to_4x4()
+        
+        region = context.region
+        rv3d = context.region_data
+        unitScale = dist_from_viewport_center(trans, region, rv3d)
+        unitScale = 1 / unitScale
+#        print("unitScale " + str(unitScale))
+        viewport_scale = self.viewportScale / unitScale
+        mS = mathutils.Matrix.Diagonal((viewport_scale, viewport_scale, viewport_scale, 1))
+    
+        # print("view Mtx " + str(rv3d.view_matrix))
+        # print("window Mtx " + str(rv3d.window_matrix))
+        # print("perspective_matrix " + str(rv3d.perspective_matrix))
+        
+    
+        hM = mathutils.Matrix.Translation(trans) @ rot.to_matrix().to_4x4() @ mS
         l2w = hM @ self.transform
         
         for i in range(len(self.coords) // 3):
@@ -195,7 +222,7 @@ class HandleScaleAroundOrigin(Handle):
                 mouse_ray = view3d_utils.region_2d_to_vector_3d(region, rv3d, mouse_pos_2d)
                 mouse_near_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, mouse_pos_2d)
 
-                hit = self.body.intersect(mouse_near_origin, mouse_ray)
+                hit = self.body.intersect(context, mouse_near_origin, mouse_ray)
                 if hit != None:
                     self.dragging = True
                     self.drag_start_pos = hit
@@ -339,7 +366,7 @@ class HandleTranslate(Handle):
                 mouse_ray = view3d_utils.region_2d_to_vector_3d(region, rv3d, mouse_pos_2d)
                 mouse_near_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, mouse_pos_2d)
 
-                hit = self.body.intersect(mouse_near_origin, mouse_ray)
+                hit = self.body.intersect(context, mouse_near_origin, mouse_ray)
                 if hit != None:
                     self.dragging = True
                     self.drag_start_pos = hit
@@ -439,7 +466,7 @@ class HandleRotateAxis(Handle):
                 mouse_ray = view3d_utils.region_2d_to_vector_3d(region, rv3d, mouse_pos_2d)
                 mouse_near_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, mouse_pos_2d)
 
-                hit = self.body.intersect(mouse_near_origin, mouse_ray)
+                hit = self.body.intersect(context, mouse_near_origin, mouse_ray)
                 if hit != None:
                     self.dragging = True
                     self.drag_start_pos = hit
