@@ -190,12 +190,12 @@ class Handle:
         self.dragging = False
 
     def draw(self, context):
-        gpu.matrix.push()        
+#        gpu.matrix.push()        
         #gpu.matrix.multiply_matrix(self.transform)
 
         self.body.draw(context, self.dragging)
         
-        gpu.matrix.pop()
+#        gpu.matrix.pop()
         
     
 
@@ -545,7 +545,9 @@ class HandleRotateAxis(Handle):
             
             mRot = mathutils.Matrix.Rotation(angle, 4, self.axisLocal)
 
-            newProjMatrix = self.startControlProj @ mRot
+            trans, rot, scale = self.startControlProj.decompose()
+#            newProjMatrix = self.startControlProj @ mRot
+            newProjMatrix = mathutils.Matrix.Translation(trans).to_4x4() @ rot.to_matrix().to_4x4() @ mRot @ mathutils.Matrix.Diagonal(scale).to_4x4()
 
             # print("newProjMatrix %s" % (str(newProjMatrix)))
 

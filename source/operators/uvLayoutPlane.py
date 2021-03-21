@@ -168,6 +168,12 @@ class UvPlaneControl:
         i = self.controlMtx.col[0].to_3d()
         j = self.controlMtx.col[1].to_3d()
         k = self.controlMtx.col[2].to_3d()
+        h = self.controlMtx.col[3].to_3d()
+        
+        # print("layout Handles " + str(self.controlMtx))
+        # print("layout Handles i " + str(i))
+        # print("layout Handles j " + str(j))
+        # print("layout Handles k " + str(k))
         
         self.handle00.transform = self.controlMtx @ mathutils.Matrix.Translation((-1, -1, 0))
         self.handle00.constraint.planeNormal = k
@@ -213,6 +219,7 @@ class UvPlaneControl:
         
         self.handleRotZ.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero)
         self.handleRotZ.constraint.planeNormal = k
+        
         
     def updateProjectionMatrix(self, context, matrix):
         self.controlMtx = matrix
