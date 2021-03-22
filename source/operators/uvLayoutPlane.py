@@ -33,9 +33,15 @@ class UvPlaneLayoutSettings(bpy.types.PropertyGroup):
     )
 
     clamp_to_basis : bpy.props.BoolProperty(
-        name="Clamp to Basis", 
-        description="Translations will be in basis vectors.  Has the visual effect of moving the origin of the UV projection without shifting the overall pattern.", 
+        name="Step by UVs", 
+        description="When you translate the control, snap to a multiple of the length of the UV vectors.", 
         default = False
+    )
+    
+    clamp_scalar : bpy.props.FloatProperty(
+        name="Step UV scalar", 
+        description="Step size when using step mode.  1 will step by the entire texture width, .5 by half the texture, etc.", 
+        default = 1
     )
 
 
