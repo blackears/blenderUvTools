@@ -91,6 +91,17 @@ class UvToolsEditPanel(bpy.types.Panel):
         col.prop(planeLayout_props, "clamp_scalar")        
         col.prop(planeLayout_props, "init_layout", expand = True)
         
+        #--------------------------------
+        layout.separator()
+        settings_tri = context.scene.triplanar_settings_props
+        
+        col = layout.column();
+        col.operator("kitfox.triplanar_uv_unwrap", text="Triplanar Unwrap")
+
+        row = layout.row()
+        row.prop(settings_tri, "scale_u")
+        row.prop(settings_tri, "scale_v")
+        
 #---------------------------
 
 
