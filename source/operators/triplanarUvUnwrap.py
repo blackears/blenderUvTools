@@ -157,7 +157,7 @@ def register():
 
 
 def unregister():
-    bpy.utils.register_class(TriplanarSettings)
+    bpy.utils.unregister_class(TriplanarSettings)
     bpy.utils.unregister_class(TriplanarUvUnwrapOperator)
     bpy.types.VIEW3D_MT_uv_map.remove(menu_func)
     

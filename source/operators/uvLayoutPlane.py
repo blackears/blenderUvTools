@@ -318,6 +318,18 @@ class UvPlaneControl:
             uv2.y = -duv1.x
             uv2 += uv0
 
+        #Center UVs on face by subtracting out integer multiples of u, v vectors
+        if True:
+            numU = math.floor(uv0.x + .5)
+            numV = math.floor(uv1.y + .5)
+            
+            offset = mathutils.Vector((numU, numV))
+            
+            uv0 -= offset
+            uv1 -= offset
+            uv2 -= offset
+            
+
         # print("uv0 " + str(uv0))
         # print("uv1 " + str(uv1))
         # print("uv2 " + str(uv2))
@@ -350,8 +362,8 @@ class UvPlaneControl:
 
 #        print("mtx C " + str(C))
         
-        CI = C.copy()
-        CI.invert()
+        # CI = C.copy()
+        # CI.invert()
 #        print("mtx C-1 " + str(CI))
 
         if obj.mode == 'OBJECT':
