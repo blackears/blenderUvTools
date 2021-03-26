@@ -280,9 +280,9 @@ def unitCylinder(segs = 16, radius0 = 1, radius1 = 1, bottom_cap = False, top_ca
             normals.append(vecZ)
             normals.append(vecZ)
             
-            uvs.append(matutils.Vector((sin0, cos0)))
-            uvs.append(matutils.Vector((sin1, cos1)))
-            uv.append(uvc)
+            uvs.append(mathutils.Vector((sin0, cos0)))
+            uvs.append(mathutils.Vector((sin1, cos1)))
+            uvs.append(uvc)
         
         if bottom_cap and radius0 != 0:
             coords.append(v00)
@@ -293,9 +293,9 @@ def unitCylinder(segs = 16, radius0 = 1, radius1 = 1, bottom_cap = False, top_ca
             normals.append(-vecZ)
             normals.append(-vecZ)
             
-            uvs.append(matutils.Vector((sin0, cos0)))
-            uvs.append(matutils.Vector((sin1, cos1)))
-            uv.append(uvc)
+            uvs.append(mathutils.Vector((sin0, cos0)))
+            uvs.append(mathutils.Vector((sin1, cos1)))
+            uvs.append(uvc)
             
         
     return (coords, normals, uvs)

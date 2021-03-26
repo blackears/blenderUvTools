@@ -174,7 +174,7 @@ class HandleBodyCone(HandleBody):
     def __init__(self, handle, transform, color, colorDrag):
         super().__init__(handle, transform, color, colorDrag)
     
-        self.coords, normals, uvs = unitCone()
+        self.coords, normals, uvs = unitCone(cap = True)
         
         self.shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
         self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": self.coords})
@@ -356,11 +356,11 @@ class HandleEdge(HandleScaleAroundOrigin):
 
 
 class HandleTranslate(Handle):
-    def __init__(self, control, transform, constraint, posControl):
+    def __init__(self, control, transform, body, constraint, posControl):
         
         self.control = control
-        xform = mathutils.Matrix.Diagonal(mathutils.Vector((.02, .02, .02, 1)))
-        body = HandleBodyCone(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
+        # xform = mathutils.Matrix.Diagonal(mathutils.Vector((.02, .02, .02, 1)))
+        # body = HandleBodyCone(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
 #        body = HandleBodySphere(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
 #        body = HandleBodyCube(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
         
@@ -452,12 +452,29 @@ class HandleTranslate(Handle):
 
 class HandleTranslateOmni(HandleTranslate):
     def __init__(self, control, transform, posControl):
-        super().__init__(control, transform, HandleConstraintOmni(), posControl)
+        xform = mathutils.Matrix.Diagonal(mathutils.Vector((.04, .04, .04, 1)))
+        body = HandleBodySphere(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
+
+        super().__init__(control, transform, body, HandleConstraintOmni(), posControl)
 
 
 class HandleTranslateVector(HandleTranslate):
     def __init__(self, control, transform, constraintVector, posControl):
-        super().__init__(control, transform, HandleConstraintVector(constraintVector), posControl)
+        xform = mathutils.Matrix.Diagonal(mathutils.Vector((.04, .04, .04, 1)))
+        
+        #Rotate body to point along vector
+        axis = constraintVector.cross(vecZ)
+        if axis.magnitude > 0:
+            i = constraintVector.normalized()
+            angle = math.acos(i.z)
+            q = mathutils.Quaternion(axis, -angle)
+            mR = q.to_matrix().to_4x4()
+            
+            xform = mR @ xform
+            
+        body = HandleBodyCone(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
+        
+        super().__init__(control, transform, body, HandleConstraintVector(constraintVector), posControl)
 
 
 class HandleRotateAxis(Handle):
