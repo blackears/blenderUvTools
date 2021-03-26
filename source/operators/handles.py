@@ -203,7 +203,7 @@ class HandleScaleAroundOrigin(Handle):
     def __init__(self, control, transform, constraint, posControl):
         
         self.control = control
-        xform = mathutils.Matrix.Diagonal(mathutils.Vector((.05, .05, .05, 1)))
+        xform = mathutils.Matrix.Diagonal(mathutils.Vector((.02, .02, .02, 1)))
         body = HandleBodyCube(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
         
         #Location of handle in i, j, k coords of control's projection matrix
@@ -346,7 +346,7 @@ class HandleTranslate(Handle):
     def __init__(self, control, transform, constraint, posControl):
         
         self.control = control
-        xform = mathutils.Matrix.Diagonal(mathutils.Vector((.05, .05, .05, 1)))
+        xform = mathutils.Matrix.Diagonal(mathutils.Vector((.02, .02, .02, 1)))
         body = HandleBodySphere(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
 #        body = HandleBodyCube(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
         
@@ -434,6 +434,16 @@ class HandleTranslate(Handle):
 
             return True
         return False
+
+
+class HandleTranslateOmni(HandleTranslate):
+    def __init__(self, control, transform, posControl):
+        super().__init__(control, transform, HandleConstraintOmni(), posControl)
+
+
+class HandleTranslateVector(HandleTranslate):
+    def __init__(self, control, transform, constraintVector, posControl):
+        super().__init__(control, transform, HandleConstraintVector(constraintVector), posControl)
 
 
 class HandleRotateAxis(Handle):

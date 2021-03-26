@@ -73,11 +73,17 @@ class UvPlaneControl:
         self.handle12 = HandleEdge(self, mathutils.Matrix.Translation(vecY), vecY, vecY)
         self.handle21 = HandleEdge(self, mathutils.Matrix.Translation(vecX), vecX, vecX)
 
-        self.handle11 = HandleTranslate(self, mathutils.Matrix(), HandleConstraintOmni(), vecZero)
+        # self.handle11 = HandleTranslate(self, mathutils.Matrix(), HandleConstraintOmni(), vecZero)
 
-        self.handleTransX = HandleTranslate(self, mathutils.Matrix(), HandleConstraintVector(vecX), vecX / 2)
-        self.handleTransY = HandleTranslate(self, mathutils.Matrix(), HandleConstraintVector(vecY), vecY / 2)
-        self.handleTransZ = HandleTranslate(self, mathutils.Matrix(), HandleConstraintVector(vecZ), vecZ / 2)
+        # self.handleTransX = HandleTranslate(self, mathutils.Matrix(), HandleConstraintVector(vecX), vecX / 2)
+        # self.handleTransY = HandleTranslate(self, mathutils.Matrix(), HandleConstraintVector(vecY), vecY / 2)
+        # self.handleTransZ = HandleTranslate(self, mathutils.Matrix(), HandleConstraintVector(vecZ), vecZ / 2)
+
+        self.handle11 = HandleTranslateOmni(self, mathutils.Matrix(), vecZero)
+
+        self.handleTransX = HandleTranslateVector(self, mathutils.Matrix(), vecX, vecX / 2)
+        self.handleTransY = HandleTranslateVector(self, mathutils.Matrix(), vecY, vecY / 2)
+        self.handleTransZ = HandleTranslateVector(self, mathutils.Matrix(), vecZ, vecZ / 2)
 
         self.handleRotX = HandleRotateAxis(self, mathutils.Matrix.Translation(vecZero), vecX, vecX)
         self.handleRotY = HandleRotateAxis(self, mathutils.Matrix.Translation(vecZero), vecY, vecY)
@@ -566,25 +572,6 @@ def draw_callback(self, context):
 
     if self.control != None:
         self.control.draw(context)
-    
-    # region = context.region
-    # rv3d = context.region_data
-
-    # viewport_center = (region.x + region.width / 2, region.y + region.height / 2)
-    # view_vector = view3d_utils.region_2d_to_vector_3d(region, rv3d, viewport_center)
-    # ray_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, viewport_center)
-
-
-    # shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
-    # batchCube = batch_for_shader(shader, 'LINES', {"pos": coordsCube})
-    # batchSquare = batch_for_shader(shader, 'TRI_FAN', {"pos": coordsSquare})
-    # batchCircle = batch_for_shader(shader, 'TRI_FAN', {"pos": coordsCircle})
-
-
-# #    print("DRAW MTs")
-    # for mesh_tracker in self.mesh_trackers:
-# #        print("Drawing mt " + str(mesh_tracker))
-        # mesh_tracker.draw(context)
 
 
 #---------------------------
