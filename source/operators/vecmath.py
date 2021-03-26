@@ -216,20 +216,20 @@ def unitCylinder(segs = 16, radius0 = 1, radius1 = 1, bottom_cap = False, top_ca
     normals = []
     uvs = []
     
-    vc0 = mathutils.Vertex((0, 0, -1))
-    vc1 = mathutils.Vertex((0, 0, 1))
-    uvc = mathutils.Vertex((.5, .5))
+    vc0 = mathutils.Vector((0, 0, -1))
+    vc1 = mathutils.Vector((0, 0, 1))
+    uvc = mathutils.Vector((.5, .5))
     
     for s in range(segs):
         sin0 = math.sin(math.radians(360 * s / segs))
+        cos0 = math.cos(math.radians(360 * s / segs))
         sin1 = math.sin(math.radians(360 * (s + 1) / segs))
-        cos0 = math.cos(math.radians(360 * lo / segs_long))
-        cos1 = math.cos(math.radians(360 * (lo + 1) / segs_long))
+        cos1 = math.cos(math.radians(360 * (s + 1) / segs))
         
         v00 = mathutils.Vector((sin0 * radius0, cos0 * radius0, -1))
         v10 = mathutils.Vector((sin1 * radius0, cos1 * radius0, -1))
         v01 = mathutils.Vector((sin0 * radius1, cos0 * radius1, 1))
-        v11 = mathutils.Vector((sin1 * radius1, cos1 * radius, 1))
+        v11 = mathutils.Vector((sin1 * radius1, cos1 * radius1, 1))
         
         tan0 = mathutils.Vector((cos0, sin0, 0))
         n00 = (v01 - v00).cross(tan0)
@@ -245,31 +245,33 @@ def unitCylinder(segs = 16, radius0 = 1, radius1 = 1, bottom_cap = False, top_ca
         uv01 = mathutils.Vector((s / segs, 1))
         uv11 = mathutils.Vector(((s + 1) / segs, 1))
         
-        coords.append(v00)
-        coords.append(v10)
-        coords.append(v11)
-
-        coords.append(v00)
-        coords.append(v11)
-        coords.append(v01)
+        if radius0 != 0:
+            coords.append(v00)
+            coords.append(v10)
+            coords.append(v11)
             
-        normals.append(n00)
-        normals.append(n10)
-        normals.append(n11)
+            normals.append(n00)
+            normals.append(n10)
+            normals.append(n11)
         
-        normals.append(n00)
-        normals.append(n11)
-        normals.append(n01)
+            uvs.append(uv00)
+            uvs.append(uv10)
+            uvs.append(uv11)
+
+        if radius1 != 0:
+            coords.append(v00)
+            coords.append(v11)
+            coords.append(v01)
+            
+            normals.append(n00)
+            normals.append(n11)
+            normals.append(n01)
+            
+            uvs.append(uv00)
+            uvs.append(uv11)
+            uvs.append(uv01)
         
-        uvs.append(uv00)
-        uvs.append(uv10)
-        uvs.append(uv11)
-        
-        uvs.append(uv00)
-        uvs.append(uv11)
-        uvs.append(uv01)
-        
-        if top_cap:
+        if top_cap and radius1 != 0:
             coords.append(v01)
             coords.append(v11)
             coords.append(vc1)
@@ -282,7 +284,7 @@ def unitCylinder(segs = 16, radius0 = 1, radius1 = 1, bottom_cap = False, top_ca
             uvs.append(matutils.Vector((sin1, cos1)))
             uv.append(uvc)
         
-        if bottom_cap:
+        if bottom_cap and radius0 != 0:
             coords.append(v00)
             coords.append(v10)
             coords.append(vc0)

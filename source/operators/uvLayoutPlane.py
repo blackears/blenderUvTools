@@ -90,14 +90,18 @@ class UvPlaneControl:
         self.handleRotZ = HandleRotateAxis(self, mathutils.Matrix.Translation(vecZero), vecZ, vecZ)
 
         
-        self.handle00.body.color = (0, 0, 1, 1)
-        self.handle02.body.color = (0, 1, 1, 1)
-        self.handle20.body.color = (1, 0, 1, 1)
-        self.handle22.body.color = (1, 1, 1, 1)
+        self.handle00.body.setColor((0, 0, 1, 1))
+        self.handle02.body.setColor((0, 1, 1, 1))
+        self.handle20.body.setColor((1, 0, 1, 1))
+        self.handle22.body.setColor((1, 1, 1, 1))
 
-        self.handleRotX.body.color = (1, 0, 0, 1)
-        self.handleRotY.body.color = (0, 1, 0, 1)
-        self.handleRotZ.body.color = (0, 0, 1, 1)
+        self.handleRotX.body.setColor((1, 0, 0, 1))
+        self.handleRotY.body.setColor((0, 1, 0, 1))
+        self.handleRotZ.body.setColor((0, 0, 1, 1))
+
+        self.handleTransX.body.setColor((1, 0, 0, 1))
+        self.handleTransY.body.setColor((0, 1, 0, 1))
+        self.handleTransZ.body.setColor((0, 0, 1, 1))
         
         self.handles = [self.handle00, self.handle02, self.handle20, self.handle22, self.handle10, self.handle01, self.handle12, self.handle21, self.handle11, self.handleTransX, self.handleTransY, self.handleTransZ, self.handleRotX, self.handleRotY, self.handleRotZ]
         

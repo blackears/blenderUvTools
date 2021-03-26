@@ -69,6 +69,9 @@ class HandleBody:
         self.colorDrag = colorDrag        
         self.dragging = False
         self.viewportScale = .2
+        
+    def setColor(self, color):
+        self.color = color
 
     def draw(self, context, dragging):
 
@@ -162,6 +165,16 @@ class HandleBodySphere(HandleBody):
         super().__init__(handle, transform, color, colorDrag)
     
         self.coords, normals, uvs = unitSphere()
+        
+        self.shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+        self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": self.coords})
+
+
+class HandleBodyCone(HandleBody):
+    def __init__(self, handle, transform, color, colorDrag):
+        super().__init__(handle, transform, color, colorDrag)
+    
+        self.coords, normals, uvs = unitCone()
         
         self.shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
         self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": self.coords})
@@ -347,7 +360,8 @@ class HandleTranslate(Handle):
         
         self.control = control
         xform = mathutils.Matrix.Diagonal(mathutils.Vector((.02, .02, .02, 1)))
-        body = HandleBodySphere(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
+        body = HandleBodyCone(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
+#        body = HandleBodySphere(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
 #        body = HandleBodyCube(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
         
         #Location of handle in i, j, k coords of control's projection matrix
