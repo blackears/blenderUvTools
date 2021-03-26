@@ -281,9 +281,9 @@ class UvPlaneControl:
         p1 = l2w @ face.verts[1].co
         p2 = l2w @ face.verts[2].co
         
-        print("p0 " + str(p0))
-        print("p1 " + str(p1))
-        print("p2 " + str(p2))
+        # print("p0 " + str(p0))
+        # print("p1 " + str(p1))
+        # print("p2 " + str(p2))
         
         p3 = p0 - bestNormal
         
@@ -291,9 +291,28 @@ class UvPlaneControl:
         uv1 = l1[uv_layer].uv
         uv2 = l2[uv_layer].uv
 
-        print("uv0 " + str(uv0))
-        print("uv1 " + str(uv1))
-        print("uv2 " + str(uv2))
+        #if uvs don't form the basis of a plane, artificially create one
+        duv1 = uv1 - uv0
+        duv2 = uv2 - uv0
+        if duv1.magnitude < .0001 and duv2.magnitude < .0001:
+            uv1 = uv0 + mathutils.Vector((1, 0, 0))
+            uv2 = uv0 + mathutils.Vector((0, 1, 0))
+
+        elif duv1.magnitude < .0001:
+            uv1.x = -duv2.y
+            uv1.y = duv2.x
+            uv1 += uv0
+
+        elif duv2.magnitude < .0001 or (uv2 - uv1).magnitude < .0001:
+            uv2.x = duv1.y
+            uv2.y = -duv1.x
+            uv2 += uv0
+
+        # print("uv0 " + str(uv0))
+        # print("uv1 " + str(uv1))
+        # print("uv2 " + str(uv2))
+        # print("duv1 " + str(duv1))
+        # print("duv2 " + str(duv2))
         
         U = mathutils.Matrix((
             (uv0.x, uv0.y, 0, 1),
@@ -302,9 +321,9 @@ class UvPlaneControl:
             (uv0.x, uv0.y, 1, 1)
             ))
         U.transpose()
-        print("mtx U " + str(U))
+#        print("mtx U " + str(U))
         U.invert()
-        print("mtx U-1 " + str(U))
+#        print("mtx U-1 " + str(U))
 
         P = mathutils.Matrix((
             (p0.x, p0.y, p0.z, 1),
@@ -314,16 +333,16 @@ class UvPlaneControl:
             ))
         P.transpose()
 
-        print("mtx P " + str(P))
+#        print("mtx P " + str(P))
 
         C = P @ U
         self.controlMtx = C
 
-        print("mtx C " + str(C))
+#        print("mtx C " + str(C))
         
         CI = C.copy()
         CI.invert()
-        print("mtx C-1 " + str(CI))
+#        print("mtx C-1 " + str(CI))
 
         if obj.mode == 'OBJECT':
             bm.free()
