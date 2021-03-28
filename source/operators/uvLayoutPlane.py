@@ -79,11 +79,11 @@ class UvPlaneControl:
         # self.handleTransY = HandleTranslate(self, mathutils.Matrix(), HandleConstraintVector(vecY), vecY / 2)
         # self.handleTransZ = HandleTranslate(self, mathutils.Matrix(), HandleConstraintVector(vecZ), vecZ / 2)
 
-        self.handle11 = HandleTranslateOmni(self, mathutils.Matrix(), vecZero)
+        self.handle11 = HandleTranslateOmni(self, mathutils.Matrix(), mathutils.Vector((.5, .5, 0)))
 
-        self.handleTransX = HandleTranslateVector(self, mathutils.Matrix(), vecX, vecX / 2)
-        self.handleTransY = HandleTranslateVector(self, mathutils.Matrix(), vecY, vecY / 2)
-        self.handleTransZ = HandleTranslateVector(self, mathutils.Matrix(), vecZ, vecZ / 2)
+        self.handleTransX = HandleTranslateVector(self, mathutils.Matrix(), vecX, mathutils.Vector((1.3, .5, 0)))
+        self.handleTransY = HandleTranslateVector(self, mathutils.Matrix(), vecY, mathutils.Vector((.5, 1.3, 0)))
+        self.handleTransZ = HandleTranslateVector(self, mathutils.Matrix(), vecZ, mathutils.Vector((.5, .5, 1.3)))
 
         self.handleRotX = HandleRotateAxis(self, mathutils.Matrix.Translation(vecZero), vecX, vecX)
         self.handleRotY = HandleRotateAxis(self, mathutils.Matrix.Translation(vecZero), vecY, vecY)
@@ -216,15 +216,15 @@ class UvPlaneControl:
         self.handle12.transform = self.controlMtx @ mathutils.Matrix.Translation(mathutils.Vector((.5, 1, 0)))
         self.handle12.constraint.vector = j
 
-        self.handle11.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero)
+        self.handle11.transform = self.controlMtx @ mathutils.Matrix.Translation(self.handle11.posControl)
 
-        self.handleTransX.transform = self.controlMtx @ mathutils.Matrix.Translation(vecX / 2)
+        self.handleTransX.transform = self.controlMtx @ mathutils.Matrix.Translation(self.handleTransX.posControl)
         self.handleTransX.constraint.vector = i
 
-        self.handleTransY.transform = self.controlMtx @ mathutils.Matrix.Translation(vecY / 2)
+        self.handleTransY.transform = self.controlMtx @ mathutils.Matrix.Translation(self.handleTransY.posControl)
         self.handleTransY.constraint.vector = j
 
-        self.handleTransZ.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZ / 2)
+        self.handleTransZ.transform = self.controlMtx @ mathutils.Matrix.Translation(self.handleTransZ.posControl)
         self.handleTransZ.constraint.vector = k
         
         self.handleRotX.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero) @ mathutils.Matrix.Rotation(math.radians(90), 4, 'Y')

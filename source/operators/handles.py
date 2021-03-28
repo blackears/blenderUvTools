@@ -68,7 +68,7 @@ class HandleBody:
         self.color = color
         self.colorDrag = colorDrag        
         self.dragging = False
-        self.viewportScale = .2
+        self.viewportScale = .3
         
     def setColor(self, color):
         self.color = color
@@ -284,94 +284,25 @@ class HandleScaleAroundPivot(Handle):
             offsetUv = pos2Uv @ tmp
             offsetUv = offsetUv.to_3d()
 
-            print("offsetUv %s" % (str(offsetUv)))
+            # print("offsetUv %s" % (str(offsetUv)))
 
             fixedPosUv = self.pivot * 2 - self.posControl
             spanNewUv = self.posControl + offsetUv - fixedPosUv
             spanUv = self.posControl - fixedPosUv
 
-            print("fixedPosUv %s" % (str(fixedPosUv)))
-            print("spanUv %s" % (str(spanUv)))
-            print("spanNewUv %s" % (str(spanNewUv)))
+            # print("fixedPosUv %s" % (str(fixedPosUv)))
+            # print("spanUv %s" % (str(spanUv)))
+            # print("spanNewUv %s" % (str(spanNewUv)))
 
-            # U0 = mathutils.Matrix((fixedPosUv.to_2d(), self.posControl.to_2d()))
-            # U0.transpose()
-            # U0.invert()
-            # U1 = mathutils.Matrix((fixedPosUv.to_2d(), (self.posControl + offsetUv).to_2d()))
-            # U1.transpose()
-            # #This is the transform in UV space that moves the starting uv point to its new position
-            # T = U1 @ U0
             sx = 1 if spanUv.x == 0 else spanNewUv.x / spanUv.x
             sy = 1 if spanUv.y == 0 else spanNewUv.y / spanUv.y
             
             #This is the transform in UV space that moves the starting uv point to its new position
             T = mathutils.Matrix.Translation((fixedPosUv)) @ mathutils.Matrix.Diagonal((sx, sy, 1, 1)) @ mathutils.Matrix.Translation((-fixedPosUv))
 
-            print("T %s" % (str(T)))
+#            print("T %s" % (str(T)))
 
             newProjMatrix = self.startControlProj @ T
-# #            print("offset %s" % (str(offset)))
-
-            # projOrigin = self.startControlProj.col[3].to_3d()
-
-# #            print("projOrigin %s" % (str(projOrigin)))
-            
-            # startPos = self.startControlProj @ self.posControl
-            # fixedPos = self.startControlProj @ fixedPosUv
-            # startOrigin = self.startControlProj.col[3].to_3d()
-
-            # print("startPos %s" % (str(startPos)))
-            # print("fixedPos %s" % (str(fixedPos)))
-            # print("startOrigin %s" % (str(startOrigin)))
-
-            # newPos = startPos + offset
-
-            # print("newPos %s" % (str(newPos)))
-            
-            
-            # # U = mathutils.Matrix((self.posControl, fixedPosUv))
-            # # U.transpose()
-            
-            # P = mathutils.Matrix((newPos, fixedPos))
-            
-            # newControlOrigin = (newPos + fixedPos) / 2
-
-            # print("newControlOrigin %s" % (str(newControlOrigin)))
-            
-            # newPosOffset = newPos - newControlOrigin
-            # w2Proj = self.startControlProj.copy()
-            # w2Proj.invert()
-            # newPosOffsetProj = w2Proj @ (newPosOffset + startOrigin)
-
-            # print("newPosOffsetProj %s" % (str(newPosOffsetProj)))
-            
-            
-            # i = self.startControlProj.col[0].to_3d()
-            # j = self.startControlProj.col[1].to_3d()
-            # k = self.startControlProj.col[2].to_3d()
-
-            # print("i %s" % (str(i)))
-            # print("j %s" % (str(j)))
-            # print("k %s" % (str(k)))
-
-            
-            # newI = i.copy() if self.posControl.x == 0 else i * newPosOffsetProj.x / self.posControl.x
-            # newJ = j.copy() if self.posControl.y == 0 else j * newPosOffsetProj.y / self.posControl.y
-            # newK = k.copy() if self.posControl.z == 0 else j * newPosOffsetProj.z / self.posControl.z
-
-
-            # newI = newI.to_4d()
-            # newI.w = 0
-            # newJ = newJ.to_4d()
-            # newJ.w = 0
-            # newK = newK.to_4d()
-            # newK.w = 0
-            # newControlOrigin = newControlOrigin.to_4d()
-            
-            # newProjMatrix = mathutils.Matrix((newI, newJ, newK, newControlOrigin))
-            # newProjMatrix.transpose()
-
-            # print("newProjMatrix %s" % (str(newProjMatrix)))
 
             self.control.updateProjectionMatrix(context, newProjMatrix)
 
@@ -507,8 +438,12 @@ class HandleTranslateVector(HandleTranslate):
         if axis.magnitude > 0:
             i = constraintVector.normalized()
             angle = math.acos(i.z)
-            q = mathutils.Quaternion(axis, -angle)
+            q = mathutils.Quaternion(axis, angle)
             mR = q.to_matrix().to_4x4()
+            
+            xform = mR @ xform
+        elif constraintVector.dot(vecZ) > 0:
+            mR = mathutils.Matrix.Rotation(math.pi, 4, vecX)
             
             xform = mR @ xform
             
