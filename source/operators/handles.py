@@ -92,7 +92,7 @@ class HandleBody:
         l2w = hM @ self.transform
 
        
-        bgl.glEnable(bgl.GL_DEPTH_TEST)
+#        bgl.glEnable(bgl.GL_DEPTH_TEST)
         
         gpu.matrix.push()
         
@@ -107,7 +107,7 @@ class HandleBody:
 
         gpu.matrix.pop()
             
-        bgl.glDisable(bgl.GL_DEPTH_TEST)
+#        bgl.glDisable(bgl.GL_DEPTH_TEST)
         
 
     def intersect(self, context, pickOrigin, pickRay):
@@ -212,9 +212,11 @@ class Handle:
         
     
 
-class HandleScaleAroundOrigin(Handle):
-    def __init__(self, control, transform, constraint, posControl):
+class HandleScaleAroundPivot(Handle):
+    #posControl is position within uv square that this control point represents
+    def __init__(self, control, transform, pivot, constraint, posControl):
         
+        self.pivot = pivot
         self.control = control
         xform = mathutils.Matrix.Diagonal(mathutils.Vector((.02, .02, .02, 1)))
         body = HandleBodyCube(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
@@ -276,62 +278,100 @@ class HandleScaleAroundOrigin(Handle):
 
             offset = self.constraint.constrain(offsetPerpToView, mouse_ray)
 
-            print("offset %s" % (str(offset)))
+            pos2Uv = self.startControlProj.inverted()
+            tmp = offset.to_4d()
+            tmp.w = 0
+            offsetUv = pos2Uv @ tmp
+            offsetUv = offsetUv.to_3d()
 
-            projOrigin = self.startControlProj.col[3].to_3d()
+            print("offsetUv %s" % (str(offsetUv)))
 
-            print("projOrigin %s" % (str(projOrigin)))
+            fixedPosUv = self.pivot * 2 - self.posControl
+            spanNewUv = self.posControl + offsetUv - fixedPosUv
+            spanUv = self.posControl - fixedPosUv
+
+            print("fixedPosUv %s" % (str(fixedPosUv)))
+            print("spanUv %s" % (str(spanUv)))
+            print("spanNewUv %s" % (str(spanNewUv)))
+
+            # U0 = mathutils.Matrix((fixedPosUv.to_2d(), self.posControl.to_2d()))
+            # U0.transpose()
+            # U0.invert()
+            # U1 = mathutils.Matrix((fixedPosUv.to_2d(), (self.posControl + offsetUv).to_2d()))
+            # U1.transpose()
+            # #This is the transform in UV space that moves the starting uv point to its new position
+            # T = U1 @ U0
+            sx = 1 if spanUv.x == 0 else spanNewUv.x / spanUv.x
+            sy = 1 if spanUv.y == 0 else spanNewUv.y / spanUv.y
             
-            startPos = self.startControlProj @ self.posControl
-            fixedPos = self.startControlProj @ -self.posControl
-            startOrigin = self.startControlProj.col[3].to_3d()
+            #This is the transform in UV space that moves the starting uv point to its new position
+            T = mathutils.Matrix.Translation((fixedPosUv)) @ mathutils.Matrix.Diagonal((sx, sy, 1, 1)) @ mathutils.Matrix.Translation((-fixedPosUv))
 
-            print("startPos %s" % (str(startPos)))
-            print("fixedPos %s" % (str(fixedPos)))
-            print("startOrigin %s" % (str(startOrigin)))
+            print("T %s" % (str(T)))
 
-            newPos = startPos + offset
+            newProjMatrix = self.startControlProj @ T
+# #            print("offset %s" % (str(offset)))
 
-            print("newPos %s" % (str(newPos)))
+            # projOrigin = self.startControlProj.col[3].to_3d()
+
+# #            print("projOrigin %s" % (str(projOrigin)))
             
-            newControlOrigin = (newPos + fixedPos) / 2
+            # startPos = self.startControlProj @ self.posControl
+            # fixedPos = self.startControlProj @ fixedPosUv
+            # startOrigin = self.startControlProj.col[3].to_3d()
 
-            print("newControlOrigin %s" % (str(newControlOrigin)))
+            # print("startPos %s" % (str(startPos)))
+            # print("fixedPos %s" % (str(fixedPos)))
+            # print("startOrigin %s" % (str(startOrigin)))
+
+            # newPos = startPos + offset
+
+            # print("newPos %s" % (str(newPos)))
             
-            newPosOffset = newPos - newControlOrigin
-            w2Proj = self.startControlProj.copy()
-            w2Proj.invert()
-            newPosOffsetProj = w2Proj @ (newPosOffset + startOrigin)
+            
+            # # U = mathutils.Matrix((self.posControl, fixedPosUv))
+            # # U.transpose()
+            
+            # P = mathutils.Matrix((newPos, fixedPos))
+            
+            # newControlOrigin = (newPos + fixedPos) / 2
 
-            print("newPosOffsetProj %s" % (str(newPosOffsetProj)))
+            # print("newControlOrigin %s" % (str(newControlOrigin)))
+            
+            # newPosOffset = newPos - newControlOrigin
+            # w2Proj = self.startControlProj.copy()
+            # w2Proj.invert()
+            # newPosOffsetProj = w2Proj @ (newPosOffset + startOrigin)
+
+            # print("newPosOffsetProj %s" % (str(newPosOffsetProj)))
             
             
-            i = self.startControlProj.col[0].to_3d()
-            j = self.startControlProj.col[1].to_3d()
-            k = self.startControlProj.col[2].to_3d()
+            # i = self.startControlProj.col[0].to_3d()
+            # j = self.startControlProj.col[1].to_3d()
+            # k = self.startControlProj.col[2].to_3d()
 
-            print("i %s" % (str(i)))
-            print("j %s" % (str(j)))
-            print("k %s" % (str(k)))
+            # print("i %s" % (str(i)))
+            # print("j %s" % (str(j)))
+            # print("k %s" % (str(k)))
 
             
-            newI = i.copy() if self.posControl.x == 0 else i * newPosOffsetProj.x / self.posControl.x
-            newJ = j.copy() if self.posControl.y == 0 else j * newPosOffsetProj.y / self.posControl.y
-            newK = k.copy() if self.posControl.z == 0 else j * newPosOffsetProj.z / self.posControl.z
+            # newI = i.copy() if self.posControl.x == 0 else i * newPosOffsetProj.x / self.posControl.x
+            # newJ = j.copy() if self.posControl.y == 0 else j * newPosOffsetProj.y / self.posControl.y
+            # newK = k.copy() if self.posControl.z == 0 else j * newPosOffsetProj.z / self.posControl.z
 
 
-            newI = newI.to_4d()
-            newI.w = 0
-            newJ = newJ.to_4d()
-            newJ.w = 0
-            newK = newK.to_4d()
-            newK.w = 0
-            newControlOrigin = newControlOrigin.to_4d()
+            # newI = newI.to_4d()
+            # newI.w = 0
+            # newJ = newJ.to_4d()
+            # newJ.w = 0
+            # newK = newK.to_4d()
+            # newK.w = 0
+            # newControlOrigin = newControlOrigin.to_4d()
             
-            newProjMatrix = mathutils.Matrix((newI, newJ, newK, newControlOrigin))
-            newProjMatrix.transpose()
+            # newProjMatrix = mathutils.Matrix((newI, newJ, newK, newControlOrigin))
+            # newProjMatrix.transpose()
 
-            print("newProjMatrix %s" % (str(newProjMatrix)))
+            # print("newProjMatrix %s" % (str(newProjMatrix)))
 
             self.control.updateProjectionMatrix(context, newProjMatrix)
 
@@ -339,20 +379,20 @@ class HandleScaleAroundOrigin(Handle):
         return False
 
 
-class HandleCorner(HandleScaleAroundOrigin):
+class HandleCorner(HandleScaleAroundPivot):
     def __init__(self, control, transform, normal, posControl):
         
         constraint = HandleConstraintPlane(normal)
 
-        super().__init__(control, transform, constraint, posControl)
+        super().__init__(control, transform, mathutils.Vector((.5, .5, 0)), constraint, posControl)
 
 
-class HandleEdge(HandleScaleAroundOrigin):
+class HandleEdge(HandleScaleAroundPivot):
     def __init__(self, control, transform, direction, posControl):
         
         constraint = HandleConstraintVector(direction)
 
-        super().__init__(control, transform, constraint, posControl)
+        super().__init__(control, transform, mathutils.Vector((.5, .5, 0)), constraint, posControl)
 
 
 class HandleTranslate(Handle):

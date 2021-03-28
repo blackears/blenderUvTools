@@ -63,15 +63,15 @@ class UvPlaneControl:
             self.setFromGrid(context)
 
         
-        self.handle00 = HandleCorner(self, mathutils.Matrix.Translation(-vecX - vecY), vecZ, -vecX - vecY)
-        self.handle02 = HandleCorner(self, mathutils.Matrix.Translation(-vecX + vecY), vecZ, -vecX + vecY)
-        self.handle20 = HandleCorner(self, mathutils.Matrix.Translation(vecX - vecY), vecZ, vecX - vecY)
-        self.handle22 = HandleCorner(self, mathutils.Matrix.Translation(vecX + vecY), vecZ, vecX + vecY)
+        self.handle00 = HandleCorner(self, mathutils.Matrix.Translation(-vecX - vecY), vecZ, mathutils.Vector((0, 0, 0)))
+        self.handle02 = HandleCorner(self, mathutils.Matrix.Translation(-vecX + vecY), vecZ, mathutils.Vector((0, 1, 0)))
+        self.handle20 = HandleCorner(self, mathutils.Matrix.Translation(vecX - vecY), vecZ, mathutils.Vector((1, 0, 0)))
+        self.handle22 = HandleCorner(self, mathutils.Matrix.Translation(vecX + vecY), vecZ, mathutils.Vector((1, 1, 0)))
 
-        self.handle10 = HandleEdge(self, mathutils.Matrix.Translation(-vecY), -vecY, -vecY)
-        self.handle01 = HandleEdge(self, mathutils.Matrix.Translation(-vecX), -vecX, -vecX)
-        self.handle12 = HandleEdge(self, mathutils.Matrix.Translation(vecY), vecY, vecY)
-        self.handle21 = HandleEdge(self, mathutils.Matrix.Translation(vecX), vecX, vecX)
+        self.handle10 = HandleEdge(self, mathutils.Matrix.Translation(-vecY), -vecY, mathutils.Vector((.5, 0, 0)))
+        self.handle01 = HandleEdge(self, mathutils.Matrix.Translation(-vecX), -vecX, mathutils.Vector((0, .5, 0)))
+        self.handle12 = HandleEdge(self, mathutils.Matrix.Translation(vecY), vecY, mathutils.Vector((.5, 1, 0)))
+        self.handle21 = HandleEdge(self, mathutils.Matrix.Translation(vecX), vecX, mathutils.Vector((1, .5, 0)))
 
         # self.handle11 = HandleTranslate(self, mathutils.Matrix(), HandleConstraintOmni(), vecZero)
 
@@ -191,29 +191,29 @@ class UvPlaneControl:
         # print("layout Handles j " + str(j))
         # print("layout Handles k " + str(k))
         
-        self.handle00.transform = self.controlMtx @ mathutils.Matrix.Translation((-1, -1, 0))
+        self.handle00.transform = self.controlMtx @ mathutils.Matrix.Translation((0, 0, 0))
         self.handle00.constraint.planeNormal = k
         
-        self.handle02.transform = self.controlMtx @ mathutils.Matrix.Translation((-1, 1, 0))
+        self.handle02.transform = self.controlMtx @ mathutils.Matrix.Translation((0, 1, 0))
         self.handle02.constraint.planeNormal = k
         
-        self.handle20.transform = self.controlMtx @ mathutils.Matrix.Translation((1, -1, 0))
+        self.handle20.transform = self.controlMtx @ mathutils.Matrix.Translation((1, 0, 0))
         self.handle20.constraint.planeNormal = k
         
         self.handle22.transform = self.controlMtx @ mathutils.Matrix.Translation((1, 1, 0))
         self.handle22.constraint.planeNormal = k
         
         
-        self.handle01.transform = self.controlMtx @ mathutils.Matrix.Translation(-vecX)
+        self.handle01.transform = self.controlMtx @ mathutils.Matrix.Translation(mathutils.Vector((0, .5, 0)))
         self.handle01.constraint.vector = -i
         
-        self.handle21.transform = self.controlMtx @ mathutils.Matrix.Translation(vecX)
+        self.handle21.transform = self.controlMtx @ mathutils.Matrix.Translation(mathutils.Vector((1, .5, 0)))
         self.handle21.constraint.vector = i
         
-        self.handle10.transform = self.controlMtx @ mathutils.Matrix.Translation(-vecY)
+        self.handle10.transform = self.controlMtx @ mathutils.Matrix.Translation(mathutils.Vector((.5, 0, 0)))
         self.handle10.constraint.vector = -j
         
-        self.handle12.transform = self.controlMtx @ mathutils.Matrix.Translation(vecY)
+        self.handle12.transform = self.controlMtx @ mathutils.Matrix.Translation(mathutils.Vector((.5, 1, 0)))
         self.handle12.constraint.vector = j
 
         self.handle11.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero)
@@ -554,7 +554,7 @@ class UvPlaneControl:
     
         shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
 #        batchCube = batch_for_shader(shader, 'LINES', {"pos": coordsCube})
-        batchCube = batch_for_shader(shader, 'LINE_STRIP', {"pos": coordsSquare2_strip})
+        batchCube = batch_for_shader(shader, 'LINE_STRIP', {"pos": coordsSquare_strip})
             
         
         if self.controlMtx == None:
