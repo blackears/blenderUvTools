@@ -38,16 +38,17 @@ class HandleConstraintVector(HandleContraint):
 #        return offset.project(self.vector)
 
 class HandleConstraintPlane(HandleContraint):
-    def __init__(self, planeNormal):
+    def __init__(self, planeOrigin, planeNormal):
         super().__init__()
+        self.planeOrigin = planeOrigin
         self.planeNormal = planeNormal
         
     def constrain(self, offset, viewDir):
-        s = isect_line_plane(offset, viewDir, vecZero, self.planeNormal)
+        s = isect_line_plane(offset, viewDir, self.planeOrigin, self.planeNormal)
         return offset + s * viewDir
         
-        # planeOff = offset.project(self.planeNormal)
-        # return offset - planeOff
+    def copy(self):
+        return HandleConstraintPlane(self.planeOrigin.copy(), self.planeNormal.copy())
 
 
 class HandleConstraintOmni(HandleContraint):
@@ -313,7 +314,7 @@ class HandleScaleAroundPivot(Handle):
 class HandleCorner(HandleScaleAroundPivot):
     def __init__(self, control, transform, normal, posControl):
         
-        constraint = HandleConstraintPlane(normal)
+        constraint = HandleConstraintPlane(vecZero, normal)
 
         super().__init__(control, transform, mathutils.Vector((.5, .5, 0)), constraint, posControl)
 
@@ -455,7 +456,11 @@ class HandleTranslateVector(HandleTranslate):
 class HandleRotateAxis(Handle):
     def __init__(self, control, transform, axis, axisLocal):
         
-        constraint = HandleConstraintPlane(axis)
+#        constraint = HandleConstraintPlane(axis)
+        
+        self.pivot = mathutils.Vector((.5, .5, 0))
+        pivotWorld = control.controlMtx @ self.pivot
+        constraint = HandleConstraintPlane(pivotWorld, axis)
         
         self.axisLocal = axisLocal
         self.control = control
@@ -488,6 +493,7 @@ class HandleRotateAxis(Handle):
                 if hit != None:
                     self.dragging = True
                     self.drag_start_pos = hit
+                    self.start_constraint = self.constraint.copy()
                     
                     #Structure of original projection matrix
                     self.startControlProj = self.control.controlMtx.copy()
@@ -511,35 +517,62 @@ class HandleRotateAxis(Handle):
 
             #calc offset in 3d space perpendicular to view direction
             startPointOffset = self.drag_start_pos - mouse_near_origin
-            offsetPerpToView = startPointOffset.project(mouse_ray) - startPointOffset
+            offsetPerpendicularToViewDir = startPointOffset.project(mouse_ray) - startPointOffset
+
+            print("self.drag_start_pos %s" % (str(self.drag_start_pos)))
 
             # print("posControl %s" % (str(self.posControl)))
             # print("offsetPerpToView %s" % (str(offsetPerpToView)))
+            p0 = self.drag_start_pos
+            p1 = self.drag_start_pos + offsetPerpendicularToViewDir
 
-            offset = self.constraint.constrain(offsetPerpToView, mouse_ray)
+            print("p0 %s" % (str(p0)))
+            print("p1 %s" % (str(p1)))
+
+            # p0 = self.constraint.constrain(p0, mouse_ray)
+            # p1 = self.constraint.constrain(p1, mouse_ray)
+            p0 = self.start_constraint.constrain(p0, mouse_ray)
+            p1 = self.start_constraint.constrain(p1, mouse_ray)
+
+            print("p0 const %s" % (str(p0)))
+            print("p1 const %s" % (str(p1)))
+
+            # offset = self.constraint.constrain(offsetPerpToView, mouse_ray)
 
             # print("offset %s" % (str(offset)))
-            origin = self.startControlProj.col[3].xyz
-
-            v0 = self.drag_start_pos - origin
-            v1 = (self.drag_start_pos + offset) - origin
-
-#            print("v0 %s" % (str(v0)))
-#            print("v1 %s" % (str(v1)))
             
+#            origin = self.startControlProj.col[3].xyz
+            origin = self.startControlProj @ self.pivot
+
+            print("origin %s" % (str(origin)))
+
+            # v0 = self.drag_start_pos - origin
+            # v1 = (self.drag_start_pos + offset) - origin
+            v0 = p0 - origin
+            v1 = p1 - origin
+
+            print("v0 %s" % (str(v0)))
+            print("v1 %s" % (str(v1)))
+
             v0.normalize()
             v1.normalize()
 
-#            print("v0 norm %s" % (str(v0)))
-#            print("v1 norm %s" % (str(v1)))
+            
+
+            print("v0 norm %s" % (str(v0)))
+            print("v1 norm %s" % (str(v1)))
 
             angle = math.acos(v0.dot(v1))
             vc = v0.cross(v1)
+            
+            print("vc %s" % (str(vc)))
 
             #Find angle relative to normal of axis
-            axisWorld = self.constraint.planeNormal
+            axisWorld = self.start_constraint.planeNormal
             if vc.dot(axisWorld) < 0:
                 angle = -angle
+
+            print("angle %s" % (str(angle * 180 / math.pi)))
             
             if event.ctrl:
 #                print ("snapping angle " + str(math.degrees(angle)))
@@ -560,12 +593,18 @@ class HandleRotateAxis(Handle):
             
 
 #            print("vc.dot(axisWorld)) %s" % (str(vc.dot(axisWorld))))
+
+#            mRot = mathutils.Matrix.Rotation(angle, 4, self.axisLocal)
+            mRot = mathutils.Matrix.Rotation(angle, 4, axisWorld)
             
-            mRot = mathutils.Matrix.Rotation(angle, 4, self.axisLocal)
+            pivotPos = self.startControlProj @ self.pivot
+            mPivot = mathutils.Matrix.Translation(pivotPos)
+            mPivotNeg = mathutils.Matrix.Translation(-pivotPos)
 
             trans, rot, scale = self.startControlProj.decompose()
 #            newProjMatrix = self.startControlProj @ mRot
-            newProjMatrix = mathutils.Matrix.Translation(trans).to_4x4() @ rot.to_matrix().to_4x4() @ mRot @ mathutils.Matrix.Diagonal(scale).to_4x4()
+            # newProjMatrix = mPivot @ mRot @ mPivotNeg @ mathutils.Matrix.Translation(trans).to_4x4() @ rot.to_matrix().to_4x4() @ mathutils.Matrix.Diagonal(scale).to_4x4()
+            newProjMatrix = mPivot @ mRot @ mPivotNeg @ self.startControlProj
 
             # print("newProjMatrix %s" % (str(newProjMatrix)))
 

@@ -73,12 +73,6 @@ class UvPlaneControl:
         self.handle12 = HandleEdge(self, mathutils.Matrix.Translation(vecY), vecY, mathutils.Vector((.5, 1, 0)))
         self.handle21 = HandleEdge(self, mathutils.Matrix.Translation(vecX), vecX, mathutils.Vector((1, .5, 0)))
 
-        # self.handle11 = HandleTranslate(self, mathutils.Matrix(), HandleConstraintOmni(), vecZero)
-
-        # self.handleTransX = HandleTranslate(self, mathutils.Matrix(), HandleConstraintVector(vecX), vecX / 2)
-        # self.handleTransY = HandleTranslate(self, mathutils.Matrix(), HandleConstraintVector(vecY), vecY / 2)
-        # self.handleTransZ = HandleTranslate(self, mathutils.Matrix(), HandleConstraintVector(vecZ), vecZ / 2)
-
         self.handle11 = HandleTranslateOmni(self, mathutils.Matrix(), mathutils.Vector((.5, .5, 0)))
 
         self.handleTransX = HandleTranslateVector(self, mathutils.Matrix(), vecX, mathutils.Vector((1.3, .5, 0)))
@@ -227,14 +221,18 @@ class UvPlaneControl:
         self.handleTransZ.transform = self.controlMtx @ mathutils.Matrix.Translation(self.handleTransZ.posControl)
         self.handleTransZ.constraint.vector = k
         
-        self.handleRotX.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero) @ mathutils.Matrix.Rotation(math.radians(90), 4, 'Y')
+        center = mathutils.Vector((.5, .5, 0))
+        self.handleRotX.transform = self.controlMtx @ mathutils.Matrix.Translation(center) @ mathutils.Matrix.Rotation(math.radians(90), 4, 'Y')
         self.handleRotX.constraint.planeNormal = i
+        self.handleRotX.constraint.planeOrigin = self.controlMtx @ self.handleRotX.pivot
         
-        self.handleRotY.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero) @ mathutils.Matrix.Rotation(math.radians(90), 4, 'X')
+        self.handleRotY.transform = self.controlMtx @ mathutils.Matrix.Translation(center) @ mathutils.Matrix.Rotation(math.radians(90), 4, 'X')
         self.handleRotY.constraint.planeNormal = j
+        self.handleRotY.constraint.planeOrigin = self.controlMtx @ self.handleRotY.pivot
         
-        self.handleRotZ.transform = self.controlMtx @ mathutils.Matrix.Translation(vecZero)
+        self.handleRotZ.transform = self.controlMtx @ mathutils.Matrix.Translation(center)
         self.handleRotZ.constraint.planeNormal = k
+        self.handleRotZ.constraint.planeOrigin = self.controlMtx @ self.handleRotZ.pivot
         
         
     def updateProjectionMatrix(self, context, matrix):
