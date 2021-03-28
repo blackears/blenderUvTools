@@ -204,12 +204,8 @@ class Handle:
         self.dragging = False
 
     def draw(self, context):
-#        gpu.matrix.push()        
-        #gpu.matrix.multiply_matrix(self.transform)
 
         self.body.draw(context, self.dragging)
-        
-#        gpu.matrix.pop()
         
     
 
@@ -272,12 +268,12 @@ class HandleScaleAroundPivot(Handle):
 
             #calc offset in 3d space perpendicular to view direction
             startPointOffset = self.drag_start_pos - mouse_near_origin
-            offsetPerpToView = startPointOffset.project(mouse_ray) - startPointOffset
+            offsetPerpendicularToViewDir = startPointOffset.project(mouse_ray) - startPointOffset
 
-            print("posControl %s" % (str(self.posControl)))
-            print("offsetPerpToView %s" % (str(offsetPerpToView)))
+            # print("posControl %s" % (str(self.posControl)))
+            # print("offsetPerpendicularToViewDir %s" % (str(offsetPerpendicularToViewDir)))
 
-            offset = self.constraint.constrain(offsetPerpToView, mouse_ray)
+            offset = self.constraint.constrain(offsetPerpendicularToViewDir, mouse_ray)
 
             pos2Uv = self.startControlProj.inverted()
             tmp = offset.to_4d()
@@ -384,12 +380,12 @@ class HandleTranslate(Handle):
 
             #calc offset in 3d space perpendicular to view direction
             startPointOffset = self.drag_start_pos - mouse_near_origin
-            offsetPerpToView = startPointOffset.project(mouse_ray) - startPointOffset
+            offsetPerpendicularToViewDir = startPointOffset.project(mouse_ray) - startPointOffset
 
             # print("posControl %s" % (str(self.posControl)))
             # print("offsetPerpToView %s" % (str(offsetPerpToView)))
 
-            offset = self.constraint.constrain(offsetPerpToView, mouse_ray)
+            offset = self.constraint.constrain(offsetPerpendicularToViewDir, mouse_ray)
 
 #            print("offset %s" % (str(offset)))
 
@@ -466,6 +462,7 @@ class HandleRotateAxis(Handle):
         self.control = control
         xform = mathutils.Matrix.Diagonal(mathutils.Vector((.05, .05, .05, 1)))
         body = HandleBodyTorus(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
+        body.viewportScale = .2
         
         super().__init__(transform, body, constraint)
 
@@ -529,8 +526,6 @@ class HandleRotateAxis(Handle):
             print("p0 %s" % (str(p0)))
             print("p1 %s" % (str(p1)))
 
-            # p0 = self.constraint.constrain(p0, mouse_ray)
-            # p1 = self.constraint.constrain(p1, mouse_ray)
             p0 = self.start_constraint.constrain(p0, mouse_ray)
             p1 = self.start_constraint.constrain(p1, mouse_ray)
 
@@ -541,7 +536,6 @@ class HandleRotateAxis(Handle):
 
             # print("offset %s" % (str(offset)))
             
-#            origin = self.startControlProj.col[3].xyz
             origin = self.startControlProj @ self.pivot
 
             print("origin %s" % (str(origin)))
@@ -551,28 +545,28 @@ class HandleRotateAxis(Handle):
             v0 = p0 - origin
             v1 = p1 - origin
 
-            print("v0 %s" % (str(v0)))
-            print("v1 %s" % (str(v1)))
+            # print("v0 %s" % (str(v0)))
+            # print("v1 %s" % (str(v1)))
 
             v0.normalize()
             v1.normalize()
 
             
 
-            print("v0 norm %s" % (str(v0)))
-            print("v1 norm %s" % (str(v1)))
+            # print("v0 norm %s" % (str(v0)))
+            # print("v1 norm %s" % (str(v1)))
 
             angle = math.acos(v0.dot(v1))
             vc = v0.cross(v1)
             
-            print("vc %s" % (str(vc)))
+#            print("vc %s" % (str(vc)))
 
             #Find angle relative to normal of axis
             axisWorld = self.start_constraint.planeNormal
             if vc.dot(axisWorld) < 0:
                 angle = -angle
 
-            print("angle %s" % (str(angle * 180 / math.pi)))
+#            print("angle %s" % (str(angle * 180 / math.pi)))
             
             if event.ctrl:
 #                print ("snapping angle " + str(math.degrees(angle)))
@@ -580,21 +574,6 @@ class HandleRotateAxis(Handle):
                 angle = math.floor(angle / snapAngle) * snapAngle
 #                print ("snapping after angle " + str(math.degrees(angle)))
 
-#            print("vc %s" % (str(vc)))
-            
-#            print("vc mag %s" % (vc.magnitude))
-            
-#            angle = math.asin(vc.magnitude)
-
-#            print("angle %s" % (str(angle)))
-            
-#            print("vc %s" % (str(vc)))
-#            print("axisWorld %s" % (str(axisWorld)))
-            
-
-#            print("vc.dot(axisWorld)) %s" % (str(vc.dot(axisWorld))))
-
-#            mRot = mathutils.Matrix.Rotation(angle, 4, self.axisLocal)
             mRot = mathutils.Matrix.Rotation(angle, 4, axisWorld)
             
             pivotPos = self.startControlProj @ self.pivot
@@ -602,8 +581,6 @@ class HandleRotateAxis(Handle):
             mPivotNeg = mathutils.Matrix.Translation(-pivotPos)
 
             trans, rot, scale = self.startControlProj.decompose()
-#            newProjMatrix = self.startControlProj @ mRot
-            # newProjMatrix = mPivot @ mRot @ mPivotNeg @ mathutils.Matrix.Translation(trans).to_4x4() @ rot.to_matrix().to_4x4() @ mathutils.Matrix.Diagonal(scale).to_4x4()
             newProjMatrix = mPivot @ mRot @ mPivotNeg @ self.startControlProj
 
             # print("newProjMatrix %s" % (str(newProjMatrix)))
