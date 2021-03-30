@@ -101,6 +101,12 @@ class UvToolsEditPanel(bpy.types.Panel):
         row = layout.row()
         row.prop(settings_tri, "scale_u")
         row.prop(settings_tri, "scale_v")
+        col.prop(settings_tri, "use_grid_scale")
+        
+        #--------------------------------
+        layout.separator()
+        col = layout.column();
+        col.prop(bpy.context.scene.tool_settings, "use_transform_correct_face_attributes")
         
 #---------------------------
 

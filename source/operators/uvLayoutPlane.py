@@ -19,11 +19,11 @@ from .blenderUtil import *
 class UvPlaneLayoutSettings(bpy.types.PropertyGroup):
     init_layout : bpy.props.EnumProperty(
         items=(
-            ('FACE', "Face", "Start with same UVs as active face"),
             ('BOUNDS', "Bounds", "Fit to bounds of selected faces"),
+            ('FACE', "Face", "Start with same UVs as active face"),
             ('GRID', "Grid", "Align UVs using grid of closest axis")
         ),
-        default='FACE'
+        default='BOUNDS'
     )
 
     selected_faces_only : bpy.props.BoolProperty(
@@ -439,16 +439,8 @@ class UvPlaneControl:
             self.controlMtx = None        
             return
 
-    
-        # #find polygon with largest area
-        # bestArea = 0
-        # bestNormal = None
-        # bestCenter = None
-        
-        
-        # # for obj in context.selected_objects:
-            # # if obj.type != "MESH":
-                # # continue
+        props = context.scene.kitfox_uv_plane_layout_props
+        selected_faces_only = props.selected_faces_only
 
         mesh = obj.data
         l2w = obj.matrix_world
@@ -460,6 +452,7 @@ class UvPlaneControl:
         bestNormal = None
         bestCenter = None
         
+        bm = None
         
         if obj.mode == 'EDIT':
             bm = bmesh.from_edit_mesh(mesh)
@@ -472,12 +465,13 @@ class UvPlaneControl:
         elif obj.mode == 'OBJECT':
             print("active poly idx " + str(mesh.polygons.active))
             bestPoly = mesh.polygons[mesh.polygons.active]
-            # if bestPoly == None:
-                # self.controlMtx = None        
-                # return 
                 
             bestNormal = n2w @ bestPoly.normal
             bestCenter = l2w @ bestPoly.center
+            
+            bm = bmesh.new()
+            bm.from_mesh(mesh)
+            
             
         #Build matrix from world space to face space
         tangent = self.findTangent(bestNormal)
@@ -510,35 +504,50 @@ class UvPlaneControl:
                 continue
 
             mesh = obj.data
+            if obj.mode == 'EDIT':
+                bm = bmesh.from_edit_mesh(mesh)
+            elif obj.mode == 'OBJECT':
+                bm = bmesh.new()
+                bm.from_mesh(mesh)
+            
             
             l2w = obj.matrix_world
             l2poly = w2poly @ l2w
             
-            for p in mesh.polygons:
-                for vIdx in p.vertices:
-                    v = mesh.vertices[vIdx]
+            for f in bm.faces:
+                if not selected_faces_only or f.select:
+                    for v in f.verts:
+#                        v = mesh.vertices[vIdx]
+                        
+                        faceV = l2poly @ v.co
+                        
+    #                    print("mapping v %s -> %s " % (str(v.co), str(faceV)))
+               
+                        minX = faceV.x if minX == None else min(faceV.x, minX)
+                        maxX = faceV.x if maxX == None else max(faceV.x, maxX)
+                        minY = faceV.y if minY == None else min(faceV.y, minY)
+                        maxY = faceV.y if maxY == None else max(faceV.y, maxY)
                     
-                    faceV = l2poly @ v.co
-                    
-#                    print("mapping v %s -> %s " % (str(v.co), str(faceV)))
-           
-                    minX = faceV.x if minX == None else min(faceV.x, minX)
-                    maxX = faceV.x if maxX == None else max(faceV.x, maxX)
-                    minY = faceV.y if minY == None else min(faceV.y, minY)
-                    maxY = faceV.y if maxY == None else max(faceV.y, maxY)
-                    
+            if obj.mode == 'OBJECT':
+                bm.free()
+
+        if minX == None:
+            return
 
         #print("minX %s  maxX %s  minY %s  maxY %s " % (str(minX), str(maxX), str(minY), str(maxY)))
 
         dx = maxX - minX
         dy = maxY - minY
-        cx = (maxX + minX) / 2
-        cy = (maxY + minY) / 2
+        # cx = (maxX + minX) / 2
+        # cy = (maxY + minY) / 2
+        cx = minX
+        cy = minY
         ctrlCenter = cx * tangent + cy * binormal + center
         #print("dx %s  dy %s  cx %s  cy %s " % (str(dx), str(dy), str(cx), str(cy)))
         #print("cx tan %s  cy tan %s" % (str(cx * tangent), str(cy * binormal)))
 
-        self.controlMtx = mathutils.Matrix((tangent * dx / 2, binormal * dy / 2, bestNormal, ctrlCenter))
+#        self.controlMtx = mathutils.Matrix((tangent * dx / 2, binormal * dy / 2, bestNormal, ctrlCenter))
+        self.controlMtx = mathutils.Matrix((tangent * dx, binormal * dy, bestNormal, ctrlCenter))
         self.controlMtx.transpose()
 
         #print("controlMtx %s" % (str(self.controlMtx)))
@@ -694,10 +703,39 @@ class UvLayoutPlaneOperator(bpy.types.Operator):
         return {'PASS_THROUGH'}
 #        return {'RUNNING_MODAL'}
 
+    def isEmpty(self, context):
+        props = context.scene.kitfox_uv_plane_layout_props
+        selected_faces_only = props.selected_faces_only
+        
+        for obj in context.selected_objects:
+            if obj.type == 'MESH':
+                mesh = obj.data
+                
+                if selected_faces_only:
+                    if obj.mode == 'EDIT':
+                        bm = bmesh.from_edit_mesh(mesh)
+                        for f in bm.faces:
+                            if f.select:
+                                return False
+                        
+                    else:
+                            
+                        for p in mesh.polygons:
+                            if p.select:
+                                return False
+                        
+                else:
+                    return False
+                    
+        return True
 
     def invoke(self, context, event):
         
         if context.area.type == 'VIEW_3D':
+            if self.isEmpty(context):
+                self.report({'WARNING'}, "Nothing selected to apply projection to")
+                return {'CANCELLED'}
+                
             args = (self, context)
             
             # Add the region OpenGL drawing callback

@@ -12,6 +12,10 @@ class TriplanarSettings(bpy.types.PropertyGroup):
         name="V Scale", description="Scale of texture along vertical", default = 1, min=0, soft_max = 4
     )
 
+    use_grid_scale : bpy.props.BoolProperty(
+        name="Use Grid Scale", description="If true, multiply coords by current grid size.", default = False
+    )
+
 def redraw_all_viewports(context):
     for area in bpy.context.screen.areas: # iterate through areas in current screen
         if area.type == 'VIEW_3D':
@@ -19,6 +23,11 @@ def redraw_all_viewports(context):
 
 def map_editmode(context):
     settings = context.scene.triplanar_settings_props
+
+    scale = context.space_data.overlay.grid_scale
+    use_grid_scale = settings.use_grid_scale
+    print("scale %s" % (str(scale)))
+    print("use_grid_scale %s" % (str(use_grid_scale)))
     
     for obj in context.selected_objects:
         if obj.type != 'MESH':
@@ -57,6 +66,10 @@ def map_editmode(context):
                     
                     uv.x /= settings.scale_u
                     uv.y /= settings.scale_v
+                    
+                    if use_grid_scale:
+                        uv /= scale
+                        
                     loop_uv.uv = uv
 
         bmesh.update_edit_mesh(me)
@@ -68,6 +81,10 @@ def map_editmode(context):
 
 def map_objectmode(context):
     settings = context.scene.triplanar_settings_props
+    scale = context.space_data.overlay.grid_scale
+    use_grid_scale = settings.use_grid_scale
+    print("scale %s" % (str(scale)))
+    print("use_grid_scale %s" % (str(use_grid_scale)))
     
     for obj in context.selected_objects:
         if obj.type != 'MESH':
@@ -105,6 +122,10 @@ def map_objectmode(context):
                 
                 uv.x /= settings.scale_u
                 uv.y /= settings.scale_v
+                    
+                if use_grid_scale:
+                    uv /= scale
+                        
                 loop_uv.uv = uv
 
 #        bmesh.update_edit_mesh(me)
