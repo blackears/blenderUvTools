@@ -69,7 +69,7 @@ class HandleBody:
         self.color = color
         self.colorDrag = colorDrag        
         self.dragging = False
-        self.viewportScale = .3
+        self.viewportScale = 500
         
     def setColor(self, color):
         self.color = color
@@ -82,11 +82,10 @@ class HandleBody:
         region = context.region
         rv3d = context.region_data
         #unitScale = calc_unit_scale2(trans, region, rv3d)
-        unitScale = dist_from_viewport_center(trans, region, rv3d)
-        #unitScale = unitScale * unitScale
-        unitScale = 1 / unitScale
-#        print("unitScale " + str(unitScale))
-        viewport_scale = self.viewportScale / unitScale
+        unitScale = dist_from_viewport_center3(trans, region, rv3d)
+        fract = self.viewportScale / region.height
+        viewport_scale = fract / unitScale
+#        viewport_scale = self.viewportScale / unitScale
         mS = mathutils.Matrix.Diagonal((viewport_scale, viewport_scale, viewport_scale, 1))
 
         hM = mathutils.Matrix.Translation(trans) @ rot.to_matrix().to_4x4() @ mS
@@ -117,10 +116,14 @@ class HandleBody:
         
         region = context.region
         rv3d = context.region_data
-        unitScale = dist_from_viewport_center(trans, region, rv3d)
-        unitScale = 1 / unitScale
+        # unitScale = dist_from_viewport_center(trans, region, rv3d)
+        # unitScale = 1 / unitScale
 #        print("unitScale " + str(unitScale))
-        viewport_scale = self.viewportScale / unitScale
+#        viewport_scale = self.viewportScale / unitScale
+        unitScale = dist_from_viewport_center3(trans, region, rv3d)
+        fract = self.viewportScale / region.height
+        viewport_scale = fract / unitScale
+        
         mS = mathutils.Matrix.Diagonal((viewport_scale, viewport_scale, viewport_scale, 1))
     
         # print("view Mtx " + str(rv3d.view_matrix))
@@ -185,7 +188,7 @@ class HandleBodyTorus(HandleBody):
     def __init__(self, handle, transform, color, colorDrag):
         super().__init__(handle, transform, color, colorDrag)
     
-        self.coords, normals, uvs = unitTorus(8)
+        self.coords, normals, uvs = unitTorus(radius = 8, ring_radius = .3)
         
         self.shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
         self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": self.coords})
@@ -460,9 +463,9 @@ class HandleRotateAxis(Handle):
         
         self.axisLocal = axisLocal
         self.control = control
-        xform = mathutils.Matrix.Diagonal(mathutils.Vector((.05, .05, .05, 1)))
+        xform = mathutils.Matrix.Diagonal(mathutils.Vector((.03, .03, .03, 1)))
         body = HandleBodyTorus(self, xform, (1, 0, 1, 1), (1, 1, 0, 1))
-        body.viewportScale = .2
+#        body.viewportScale = 300
         
         super().__init__(transform, body, constraint)
 

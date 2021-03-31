@@ -558,7 +558,24 @@ class UvPlaneControl:
     
     def draw(self, context):
         #print("draign control")
+        
+#        rv3d = context.space_data.region_3d
+#        w2v = rv3d.view_matrix
+#        v2w = w2v.inverted()
+#        print("view_matrix " + str(w2v))
+#        print("view_matrix I " + str(v2w))
+        
+#        win2v = rv3d.window_matrix
+#        print("window_matrix " + str(win2v))
+#        print("window_matrix I " + str(win2v.inverted()))
+        
+        # rv3d.view_perspective
+        # rv3d.is_perspective
+#        persp = rv3d.perspective_matrix
+#        print("perspective_matrix " + str(persp))
+#        print("perspective_matrix I " + str(persp.inverted()))
     
+        #---------------------------
         shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
 #        batchCube = batch_for_shader(shader, 'LINES', {"pos": coordsCube})
         batchCube = batch_for_shader(shader, 'LINE_STRIP', {"pos": coordsSquare_strip})

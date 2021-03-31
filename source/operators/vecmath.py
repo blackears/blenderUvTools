@@ -467,38 +467,134 @@ class Face(Enum):
     
     
 #Scale to apply so that a sphere of diameter 1 at position pos appears to be 1 unit high in the viewport
-def calc_unit_scale(pos, region, rv3d):
-    viewport_pos = view3d_utils.location_3d_to_region_2d(region, rv3d, pos)
-    viewport_pos_near = view3d_utils.region_2d_to_origin_3d(region, rv3d, viewport_pos)
+# def calc_unit_scale(pos, region, rv3d):
+    # viewport_pos = view3d_utils.location_3d_to_region_2d(region, rv3d, pos)
+    # viewport_pos_near = view3d_utils.region_2d_to_origin_3d(region, rv3d, viewport_pos)
     
-    pos_dir = pos - viewport_pos_near
+    # pos_dir = pos - viewport_pos_near
     
-#    print("pos " + str(pos))        
+# #    print("pos " + str(pos))        
 
-    perp = vecZ.cross(pos_dir)
-    perp.normalize()
-#    print("perp " + str(perp))
+    # perp = vecZ.cross(pos_dir)
+    # perp.normalize()
+# #    print("perp " + str(perp))
     
-#    print ("viewport_pos " + str(viewport_pos))
+# #    print ("viewport_pos " + str(viewport_pos))
     
-    viewport_perp = view3d_utils.location_3d_to_region_2d(region, rv3d, pos + perp)
+    # viewport_perp = view3d_utils.location_3d_to_region_2d(region, rv3d, pos + perp)
     
-#    print ("viewport_perp " + str(viewport_perp))
-    viewport_offset = viewport_perp - viewport_pos
-#        print ("viewport_offset " + str(viewport_offset))
+# #    print ("viewport_perp " + str(viewport_perp))
+    # viewport_offset = viewport_perp - viewport_pos
+# #        print ("viewport_offset " + str(viewport_offset))
     
-    return 1 / viewport_offset.magnitude
+    # return 1 / viewport_offset.magnitude
 
 #return number of pixels tall a 1 unit sphere will be at the given position
-def dist_from_viewport_center(pos, region, rv3d):
+# def dist_from_viewport_center(pos, region, rv3d):
 
-    center_2d = (region.x + region.width / 2, region.y + region.height / 2)
-#    view_ray = view3d_utils.region_2d_to_vector_3d(region, rv3d, center_2d)
-    view_near_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, center_2d)
+    # center_2d = (region.x + region.width / 2, region.y + region.height / 2)
+# #    view_ray = view3d_utils.region_2d_to_vector_3d(region, rv3d, center_2d)
+    # view_near_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, center_2d)
 
-#    along_view = (pos - view_near_origin).project(view_ray)
-    along_view = pos - view_near_origin
-    return along_view.magnitude
+# #    along_view = (pos - view_near_origin).project(view_ray)
+    # along_view = pos - view_near_origin
+    # return along_view.magnitude
+
+#return scaling factor to apply to object so that a 1 unit radius sphere at pos will appear one pixel high in viewport
+# def dist_from_viewport_center2(pos, region, rv3d):
+    # center_2d = (region.x + region.width / 2, region.y + region.height / 2)    
+    # center_ray = view3d_utils.region_2d_to_vector_3d(region, rv3d, center_2d)
+    # center_view_plane = view3d_utils.region_2d_to_origin_3d(region, rv3d, center_2d)
+    
+# #    print("center_2d " + str(center_2d))
+# #    print("center_ray " + str(center_ray))
+# #    print("center_view_plane " + str(center_view_plane))
+    
+    # top_2d = (region.x + region.width / 2, region.y + region.height)
+    # top_ray = view3d_utils.region_2d_to_vector_3d(region, rv3d, top_2d)
+    # top_view_plane = view3d_utils.region_2d_to_origin_3d(region, rv3d, top_2d)
+
+# #    print("top_2d " + str(top_2d))
+# #    print("top_ray " + str(top_ray))
+# #    print("top_view_plane " + str(top_view_plane))
+
+    # center_pos = (pos - center_view_plane).project(center_ray)
+
+    # s = isect_line_plane(top_view_plane, top_ray, pos, center_ray)
+    # top_pos = top_view_plane + s * top_ray
+
+# #    print("center_pos " + str(center_pos))
+# #    print("top_pos " + str(top_pos))
+
+# #    proj_offset = top_pos - center_pos
+    
+    # #
+    # ratioViewToPos = (top_view_plane - center_view_plane).magnitude / (top_pos - center_pos).magnitude
+# #    print("ratioViewToPos " + str(ratioViewToPos))
+# #    print("ratioViewToPos / region.height " + str(ratioViewToPos / region.height))
+    
+    # return ratioViewToPos / region.height
+
+#Returns the fraction of the viewport that a sphere of radius 1 will occupy
+def dist_from_viewport_center3(pos, region, rv3d):
+    
+    w2v = rv3d.view_matrix
+    v2w = w2v.inverted()
+    #view_origin = v2w.translation.copy()
+    j = v2w.col[1].to_3d()
+    
+#    print("v2w " + str(v2w))
+#    print("j " + str(j))
+    
+    persp = rv3d.perspective_matrix
+    
+    pos0_win = persp @ pos.to_4d()
+    pos0_win /= pos0_win.w
+    p0 = pos0_win.to_2d()
+    
+#    print("pos0_win " + str(pos0_win))
+#    print("p0 " + str(p0))
+    
+    pos1_win = persp @ (pos + j).to_4d()
+    pos1_win /= pos1_win.w
+    p1 = pos1_win.to_2d()
+
+#    print("pos1_win " + str(pos1_win))
+#    print("p1 " + str(p1))
+    
+    dist = (p1 - p0).magnitude
+    
+#    print("dist " + str(dist))
+    
+#    return dist / region.height
+#    return 1 / dist
+#    return region.height / dist
+    return dist
+    
+# def dist_from_viewport_center2(pos, region, rv3d):
+
+    # center_2d = (region.x + region.width / 2, region.y + region.height / 2)
+    # top_2d = (region.x + region.width / 2, region.y + region.height)
+    
+    # center_ray = view3d_utils.region_2d_to_vector_3d(region, rv3d, center_2d)
+    # center_view_plane = view3d_utils.region_2d_to_origin_3d(region, rv3d, center_2d)
+    
+    # top_ray = view3d_utils.region_2d_to_vector_3d(region, rv3d, top_2d)
+    # top_ray.normalize()
+    # top_view_plane = view3d_utils.region_2d_to_origin_3d(region, rv3d, top_2d)
+    
+    # dUp = top_view_plane - center_view_plane
+    # sphere_top = pos + dUp.normalized()
+    # dPosPerp = pos - center_view_plane
+    
+    # #Find point where ray projected from top point would hit when it intersects the plane which is parallel to viewplane and passing through pos
+    # h = dPosPerp.dot(dPosPerp) / dPosPerp.dot(top_ray)
+    # top_pos = top_view_plane + top_ray * h
+    
+    # dPosParallel = top_pos - pos
+    # dPosParallel.magnitude
+
+
     
 
 def calc_unit_scale3(pos, region, rv3d):
