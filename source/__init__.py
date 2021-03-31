@@ -16,7 +16,7 @@
 
 bl_info = {
     "name": "Uv Tools",
-    "description": "Tools to help lay in blocks.",
+    "description": "Tools for editing UVs in the viewport.",
     "author": "Mark McKay",
     "version": (1, 0, 0),
     "blender": (2, 80, 0),
