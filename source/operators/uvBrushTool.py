@@ -445,6 +445,7 @@ class UvBrushToolOperator(bpy.types.Operator):
 
 #                print("dragUv0: %s  dragUv1: %s  dUv: %s" % (str(dragUv0), str(dragUv1), str(dUv)))
                     
+#                print ("dUv.magnitude " + str(dUv.magnitude))
             
 #                print("loop total:%d" % (p.loop_total))
             
@@ -454,6 +455,7 @@ class UvBrushToolOperator(bpy.types.Operator):
                     v = loop.vert
                     pos = l2w @ v.co
                     dist = (pos - location).magnitude
+#                    print ("dist " + str(dist))
                     if dist < brush_radius:
                         atten = 1 - dist / brush_radius
                         atten *= strength
