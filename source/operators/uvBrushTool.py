@@ -227,6 +227,10 @@ class UvBrushToolOperator(bpy.types.Operator):
 
     #if bookmark is other than -1, snapshot added to bookmark library rather than undo stack
     def history_snapshot(self, context, bookmark = -1):
+        if True:
+            #Disabling history for now
+            return
+    
         map = {}
         for obj in context.selected_objects:
             if obj.type == 'MESH':
@@ -256,12 +260,20 @@ class UvBrushToolOperator(bpy.types.Operator):
             self.history_idx += 1
         
     def history_undo(self, context):
+        if True:
+            #Disabling history for now
+            return
+    
         if (self.history_idx == 0):
             return
             
         self.history_undo_to_snapshot(context, self.history_idx - 1)
                 
     def history_redo(self, context):
+        if True:
+            #Disabling history for now
+            return
+    
         if (self.history_idx == len(self.history) - 1):
             return
 
@@ -269,6 +281,10 @@ class UvBrushToolOperator(bpy.types.Operator):
             
         
     def history_restore_bookmark(self, context, bookmark):
+        if True:
+            #Disabling history for now
+            return
+    
         map = self.history[bookmark]
     
         for obj in context.selected_objects:
@@ -288,6 +304,10 @@ class UvBrushToolOperator(bpy.types.Operator):
                     #bmesh.update_edit_mesh(obj.data)
         
     def history_undo_to_snapshot(self, context, idx):
+        if True:
+            #Disabling history for now
+            return
+    
         if idx < 0 or idx >= len(self.history):
             return
             
@@ -300,8 +320,11 @@ class UvBrushToolOperator(bpy.types.Operator):
                 bm = map[obj]
                 
                 mesh = obj.data
-                bm.to_mesh(mesh)
-                mesh.update()
+                if obj.mode == 'OBJECT':
+                    bm.to_mesh(mesh)
+                    mesh.update()
+                elif obj.mode == 'EDIT':
+                    bm.update_edit_mesh(mesh)
         
     def history_clear(self, context):
         for key in self.history_bookmarks:
@@ -332,7 +355,7 @@ class UvBrushToolOperator(bpy.types.Operator):
         index = None
         
         if self.edit_object == None:
-            hit_object, location, normal, face_index, object, matrix = ray_cast_scene(context, viewlayer, ray_origin, view_vector, self.edit_object)
+            hit_object, location, normal, face_index, object, matrix = ray_cast_scene(context, viewlayer, ray_origin, view_vector)
         else:
             if self.edit_object.mode == 'OBJECT':
                 hit_object, location, normal, index = self.edit_object.ray_cast(ray_origin, view_vector)
@@ -361,6 +384,11 @@ class UvBrushToolOperator(bpy.types.Operator):
                 self.edit_object = object
 #            print("--------Edit object uvs") 
             
+            l2w = object.matrix_world
+            n2w = l2w.copy()
+            n2w.invert()
+            n2w.transpose()
+            
             mesh = object.data
             if self.edit_object.mode == 'EDIT':
                 bm = bmesh.from_edit_mesh(mesh)
@@ -378,9 +406,9 @@ class UvBrushToolOperator(bpy.types.Operator):
                 l1 = face.loops[1]
                 l2 = face.loops[2]
             
-                v0pos = l0.vert.co
-                v1pos = l1.vert.co
-                v2pos = l2.vert.co
+                v0pos = l2w @ l0.vert.co
+                v1pos = l2w @ l1.vert.co
+                v2pos = l2w @ l2.vert.co
                 
 #                print("v0pos: %s  v1pos: %s  v2pos: %s  " % (str(v0pos), str(v1pos), str(v2pos)))
 
@@ -389,8 +417,10 @@ class UvBrushToolOperator(bpy.types.Operator):
 
 #                print("v1: %s  v2: %s  norm: %s  " % (str(v1), str(v2), str(p.normal)))
 
-                dragP0 = project_point_onto_plane(self.stroke_trail[-1], v0pos, face.normal)
-                dragP1 = project_point_onto_plane(location, v0pos, face.normal)
+                faceNormal = mul_vector(n2w, face.normal)
+                
+                dragP0 = project_point_onto_plane(self.stroke_trail[-1], v0pos, faceNormal)
+                dragP1 = project_point_onto_plane(location, v0pos, faceNormal)
 
 #                print("dragP0: %s  dragP1: %s" % (str(dragP0), str(dragP1)))
 
@@ -404,8 +434,8 @@ class UvBrushToolOperator(bpy.types.Operator):
 #                print("uv0: %s  uv1: %s  uv2: %s" % (str(uv0), str(uv1), str(uv2)))
                 
             
-                locCo0 = express_in_basis(dragP0 - v0pos, v1, v2, face.normal)
-                locCo1 = express_in_basis(dragP1 - v0pos, v1, v2, face.normal)
+                locCo0 = express_in_basis(dragP0 - v0pos, v1, v2, faceNormal)
+                locCo1 = express_in_basis(dragP1 - v0pos, v1, v2, faceNormal)
 
 #                print("locCo0: %s  locCo1: %s" % (str(locCo0), str(locCo1)))
             
@@ -422,10 +452,11 @@ class UvBrushToolOperator(bpy.types.Operator):
                     
                     loop_uv = loop[uv_layer].uv
                     v = loop.vert
-                    pos = v.co
+                    pos = l2w @ v.co
                     dist = (pos - location).magnitude
                     if dist < brush_radius:
                         atten = 1 - dist / brush_radius
+                        atten *= strength
                         if use_pressure:
                             atten *= event.pressure
                         vert_trackers[v.index].considerUv(loop_uv.copy(), dist, loop_uv - atten * dUv)

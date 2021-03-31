@@ -479,7 +479,15 @@ class Face(Enum):
     Y_NEG = 3
     Z_POS = 4
     Z_NEG = 5
-    
+
+#Multiply a vector by a 4x4 matrix.  Returns 3d vector.
+def mul_vector(matrix, vector):
+    v0 = vector.to_4d()
+    v0.w = 0
+    v1 = matrix @ v0
+    return v1.to_3d()
+
+
     
 #Scale to apply so that a sphere of diameter 1 at position pos appears to be 1 unit high in the viewport
 # def calc_unit_scale(pos, region, rv3d):
