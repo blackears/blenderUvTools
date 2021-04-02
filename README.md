@@ -88,9 +88,13 @@ To install, start Blender and select Edit > Preferences from the menubar.  Selec
 
 ## Further Information
 
+This addon is available from the Blender market:
+
+https://blendermarket.com/products/uv-tools
+
+
 A video giving a quick tour of the plugin is available here:
 
 [![Video thumbnail](https://img.youtube.com/vi/bnz31KJJITc/0.jpg)](https://youtu.be/bnz31KJJITc)
-
 
 
