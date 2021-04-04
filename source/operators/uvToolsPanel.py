@@ -108,6 +108,16 @@ class UvToolsEditPanel(bpy.types.Panel):
         
         #--------------------------------
         layout.separator()
+        settings_copy_sym = context.scene.kitfox_copy_symmetric_uvs
+        
+        col = layout.column();
+        col.operator("kitfox.copy_symmetric_uvs", text="Copy Symmetric UVs")
+
+        col.prop(settings_copy_sym, "axis")
+        col.prop(settings_copy_sym, "epsilon")
+        
+        #--------------------------------
+        layout.separator()
         settings_tri = context.scene.triplanar_settings_props
         
         col = layout.column();

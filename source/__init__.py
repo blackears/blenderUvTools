@@ -46,6 +46,11 @@ if "bpy" in locals():
     else:
         from .operators import triplanarUvUnwrap
         
+    if "copySymmetricUvs" in locals():
+        importlib.reload(copySymmetricUvs)
+    else:
+        from .operators import copySymmetricUvs
+        
     if "uvToolsPanel" in locals():
         importlib.reload(uvToolsPanel)
     else:
@@ -54,12 +59,14 @@ if "bpy" in locals():
 else:
     from .operators import uvBrushTool
     from .operators import triplanarUvUnwrap
+    from .operators import copySymmetricUvs
     from .operators import uvLayoutPlane
     from .operators import uvToolsPanel
 
 def register():
     uvBrushTool.register()
     triplanarUvUnwrap.register()
+    copySymmetricUvs.register()
     uvLayoutPlane.register()
     uvToolsPanel.register()
 
@@ -67,6 +74,7 @@ def register():
 def unregister():
     uvBrushTool.unregister()
     triplanarUvUnwrap.unregister()
+    copySymmetricUvs.unregister()
     uvLayoutPlane.unregister()
     uvToolsPanel.unregister()
 
