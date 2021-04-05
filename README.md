@@ -65,7 +65,7 @@ Copy UVs to faces that are reflected across an axis.  For every selected face, t
 Axis to reflect UVs across.
 
 ##### Epsilon
-How close vertices need to be to be considered overlapping.  The reflected face's vertcies must be within this tolerance of the source face's vertices.
+How close vertices need to be to be considered overlapping.  The reflected face's vertices must be within this tolerance of the source face's vertices.
 
 
 
@@ -108,8 +108,9 @@ This addon is available from the Blender market:
 https://blendermarket.com/products/uv-tools
 
 
-A video giving a quick tour of the plugin is available here:
+A video giving a quick tour of the addon is available here:
 
 [![Video thumbnail](https://img.youtube.com/vi/bnz31KJJITc/0.jpg)](https://youtu.be/bnz31KJJITc)
+[![Video thumbnail](https://img.youtube.com/vi/hsBdzfSci8k/0.jpg)](https://youtu.be/hsBdzfSci8k)
 
 
