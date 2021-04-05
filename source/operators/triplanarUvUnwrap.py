@@ -164,9 +164,9 @@ def map_objectmode(context):
         
 
 class TriplanarUvUnwrapOperator(bpy.types.Operator):
-    """Vertex Pos as UVs"""
+    """Perform cubemap projection using grid coodinates to generate uvs."""
     bl_idname = "kitfox.triplanar_uv_unwrap"
-    bl_label = "Vertex Pos as UVs"
+    bl_label = "Triplanar Unwrap"
     bl_options = {'REGISTER', 'UNDO'}
 
     # scale: FloatProperty(
@@ -191,16 +191,16 @@ class TriplanarUvUnwrapOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def menu_func(self, context):
-    self.layout.operator("kitfox.triplanar_uv_unwrap")
-    # bl_idname should be in form of "something.something"
-    # or YourClass.bl_idname
+# def menu_func(self, context):
+    # self.layout.operator("kitfox.triplanar_uv_unwrap")
+    # # bl_idname should be in form of "something.something"
+    # # or YourClass.bl_idname
 
 
 def register():
     bpy.utils.register_class(TriplanarSettings)
     bpy.utils.register_class(TriplanarUvUnwrapOperator)
-    bpy.types.VIEW3D_MT_uv_map.prepend(menu_func)
+#    bpy.types.VIEW3D_MT_uv_map.prepend(menu_func)
 
     bpy.types.Scene.triplanar_settings_props = bpy.props.PointerProperty(type=TriplanarSettings)
 
@@ -208,7 +208,7 @@ def register():
 def unregister():
     bpy.utils.unregister_class(TriplanarSettings)
     bpy.utils.unregister_class(TriplanarUvUnwrapOperator)
-    bpy.types.VIEW3D_MT_uv_map.remove(menu_func)
+#    bpy.types.VIEW3D_MT_uv_map.remove(menu_func)
     
     del bpy.types.Scene.triplanar_settings_props
 

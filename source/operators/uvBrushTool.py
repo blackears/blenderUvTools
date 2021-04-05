@@ -196,9 +196,9 @@ class VertexTracker:
 #-------------------------------------
 
 class UvBrushToolOperator(bpy.types.Operator):
-    """Tooltip"""
+    """Move uvs on your mesh by stroking a brush."""
     bl_idname = "kitfox.uv_brush_operator"
-    bl_label = "Simple Object Operator"
+    bl_label = "UV Brush"
     bl_options = {"REGISTER", "UNDO"}
 
     def __init__(self):

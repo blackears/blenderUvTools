@@ -142,6 +142,17 @@ class UvToolsEditPanel(bpy.types.Panel):
 #---------------------------
 
 
+def menu_start_uvBrush(self, context):
+    self.layout.operator("kitfox.uv_brush_operator")
+
+def menu_start_planarProject(self, context):
+    self.layout.operator("kitfox.uv_plane_layout_op")
+
+def menu_start_copySymmetricUvs(self, context):
+    self.layout.operator("kitfox.copy_symmetric_uvs")
+
+def menu_start_triplanarProject(self, context):
+    self.layout.operator("kitfox.triplanar_uv_unwrap")
 
 def register():
     
@@ -159,14 +170,22 @@ def register():
     preview_collections["main"] = pcoll
 
     #Register tools
-#    bpy.utils.register_class(UvToolsObjectPanel)
     bpy.utils.register_class(UvToolsEditPanel)
-
+    
+    #Register menus
+    bpy.types.VIEW3D_MT_uv_map.append(menu_start_uvBrush)
+    bpy.types.VIEW3D_MT_uv_map.append(menu_start_planarProject)
+    bpy.types.VIEW3D_MT_uv_map.append(menu_start_copySymmetricUvs)
+    bpy.types.VIEW3D_MT_uv_map.append(menu_start_triplanarProject)
 
 def unregister():
-#    bpy.utils.unregister_class(UvToolsObjectPanel)
     bpy.utils.unregister_class(UvToolsEditPanel)
 
+    #Unregister menus
+    bpy.types.VIEW3D_MT_uv_map.remove(menu_start_uvBrush)
+    bpy.types.VIEW3D_MT_uv_map.remove(menu_start_planarProject)
+    bpy.types.VIEW3D_MT_uv_map.remove(menu_start_copySymmetricUvs)
+    bpy.types.VIEW3D_MT_uv_map.remove(menu_start_triplanarProject)
     
     #Unload icons
     for pcoll in preview_collections.values():
