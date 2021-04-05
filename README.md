@@ -55,6 +55,21 @@ Defines how the control should be initialized when the **Uv Plane Project** butt
 
 
 
+### Copy Symmetric UVs
+
+![Copy Symmetric UVs](doc/image/copySymmetricUvs.png)
+
+Copy UVs to faces that are reflected across an axis.  For every selected face, this tool will check if a mirror image exists of it on the other side of the axis.  If so, the UVs of the selected side are copied to the unselected side.  If both are selected, the positive side of the axis is copied to the negative side.
+
+##### Axis
+Axis to reflect UVs across.
+
+##### Epsilon
+How close vertices need to be to be considered overlapping.  The reflected face's vertcies must be within this tolerance of the source face's vertices.
+
+
+
+
 ### Triplanar Projection
 
 ![Triplanar Unwrap](doc/image/triplanarUnwrap.png)
