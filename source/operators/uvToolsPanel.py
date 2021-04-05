@@ -104,6 +104,7 @@ class UvToolsEditPanel(bpy.types.Panel):
         col.prop(planeLayout_props, "selected_faces_only")
         col.prop(planeLayout_props, "clamp_to_basis")
         col.prop(planeLayout_props, "clamp_scalar")
+        col.label(text = "Starting Layout:")
         col.prop(planeLayout_props, "init_layout", expand = True)
         
         #--------------------------------
