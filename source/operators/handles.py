@@ -294,16 +294,22 @@ class HandleScaleAroundPivot(Handle):
             offset = self.constraint.constrain(offsetPerpendicularToViewDir, mouse_ray)
 
             pos2Uv = self.startControlProj.inverted()
-            tmp = offset.to_4d()
-            tmp.w = 0
-            offsetUv = pos2Uv @ tmp
-            offsetUv = offsetUv.to_3d()
+            offsetUv = mult_vector(pos2Uv, offset)
+            # tmp = offset.to_4d()
+            # tmp.w = 0
+            # offsetUv = pos2Uv @ tmp
+            # offsetUv = offsetUv.to_3d()
 
             # print("offsetUv %s" % (str(offsetUv)))
+
 
             fixedPosUv = self.pivot * 2 - self.posControl
             spanNewUv = self.posControl + offsetUv - fixedPosUv
             spanUv = self.posControl - fixedPosUv
+
+            if event.shift:
+                spanNewUv = spanNewUv.project(spanUv)
+
 
             # print("fixedPosUv %s" % (str(fixedPosUv)))
             # print("spanUv %s" % (str(spanUv)))
@@ -311,7 +317,7 @@ class HandleScaleAroundPivot(Handle):
 
             sx = 1 if spanUv.x == 0 else spanNewUv.x / spanUv.x
             sy = 1 if spanUv.y == 0 else spanNewUv.y / spanUv.y
-            
+        
             #This is the transform in UV space that moves the starting uv point to its new position
             T = mathutils.Matrix.Translation((fixedPosUv)) @ mathutils.Matrix.Diagonal((sx, sy, 1, 1)) @ mathutils.Matrix.Translation((-fixedPosUv))
 
