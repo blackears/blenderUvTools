@@ -30,6 +30,8 @@ If checked, the pressure you apply with your stylus will multiply the strength o
 
 Creates a control that allows you to perform a UV planar projection in the viewport.
 
+Click and drag handles to resize, translate or rotate the control.  Hold **shift** when dragging scale handles for uniform scaling.  Hold **control** when rotating to snap rotations to increments of 15 degrees.
+
 
 ##### UV Plane Project
 Start the plane project tool.
