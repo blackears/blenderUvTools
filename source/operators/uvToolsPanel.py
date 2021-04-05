@@ -103,7 +103,7 @@ class UvToolsEditPanel(bpy.types.Panel):
         col.operator("kitfox.uv_plane_layout_op", text="Uv Plane Project", icon_value = pcoll["uvBrush"].icon_id)
         col.prop(planeLayout_props, "selected_faces_only")
         col.prop(planeLayout_props, "clamp_to_basis")
-        col.prop(planeLayout_props, "clamp_scalar")        
+        col.prop(planeLayout_props, "clamp_scalar")
         col.prop(planeLayout_props, "init_layout", expand = True)
         
         #--------------------------------
@@ -123,9 +123,14 @@ class UvToolsEditPanel(bpy.types.Panel):
         col = layout.column();
         col.operator("kitfox.triplanar_uv_unwrap", text="Triplanar Unwrap")
 
-        row = layout.row()
-        row.prop(settings_tri, "scale_u")
-        row.prop(settings_tri, "scale_v")
+        col.prop(settings_tri, "scale_uniform")
+        row = col.row()
+        if settings_tri.scale_uniform:
+            row.prop(settings_tri, "scale_u", text = "Scale")
+        else:
+            row.prop(settings_tri, "scale_u")
+            row.prop(settings_tri, "scale_v")
+            
         col.prop(settings_tri, "use_grid_scale")
         
         #--------------------------------

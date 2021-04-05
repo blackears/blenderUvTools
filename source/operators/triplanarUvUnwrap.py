@@ -19,6 +19,11 @@ import mathutils
 
 
 class TriplanarSettings(bpy.types.PropertyGroup):
+
+    scale_uniform : bpy.props.BoolProperty(
+        name="Scale Uniform", description="If true, both axes will be scaled by the same amount.  Otherwise u and v scaling can be specified separately.", default = True
+    )
+    
     scale_u : bpy.props.FloatProperty(
         name="U Scale", description="Scale of texture along horizon", default = 1, min=0, soft_max = 4
     )
@@ -79,8 +84,12 @@ def map_editmode(context):
                     else:
                         uv = mathutils.Vector(wco.xy)
                     
-                    uv.x /= settings.scale_u
-                    uv.y /= settings.scale_v
+                    if settings.scale_uniform:
+                        uv.x /= settings.scale_u
+                        uv.y /= settings.scale_u
+                    else:
+                        uv.x /= settings.scale_u
+                        uv.y /= settings.scale_v
                     
                     if use_grid_scale:
                         uv /= scale
@@ -135,8 +144,12 @@ def map_objectmode(context):
                 else:
                     uv = mathutils.Vector(wco.xy)
                 
-                uv.x /= settings.scale_u
-                uv.y /= settings.scale_v
+                if settings.scale_uniform:
+                    uv.x /= settings.scale_u
+                    uv.y /= settings.scale_u
+                else:
+                    uv.x /= settings.scale_u
+                    uv.y /= settings.scale_v
                     
                 if use_grid_scale:
                     uv /= scale

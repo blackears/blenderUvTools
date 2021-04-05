@@ -81,6 +81,9 @@ Perform a cubemap projection based on the grid coorinates.
 ##### Use Grid Scale
 If true, the current scale factor of the grid will be applied to the projection.  Otherwise the layout will be done with absolute values.
 
+##### Uniform Scale
+If true, u and v axes will be scaled uniformly.  Otherwise scaling for each axis can be specified separately.
+
 ##### U Scale
 Multiplier for U coorinate.
 
