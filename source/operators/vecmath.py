@@ -603,6 +603,9 @@ def findVectorScalar(v0, v1):
 def abs_vector(vector):
     return mathutils.Vector((abs(vector.x), abs(vector.y), abs(vector.z)))
 
+def floor_vector(vector):
+    return mathutils.Vector((math.floor(vector.x), math.floor(vector.y), math.floor(vector.z)))
+
 def mult_vector(matrix, vector):
     v = vector.copy()
     v.resize_4d()

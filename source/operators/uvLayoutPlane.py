@@ -60,6 +60,12 @@ class UvPlaneLayoutSettings(bpy.types.PropertyGroup):
         default = 1
     )
 
+    relocate_origin : bpy.props.BoolProperty(
+        name="Relocate Origin", 
+        description="If true, when you start in Face mode, the origin will be relocated to be close to the center of the active face.", 
+        default = True
+    )
+
 
 #---------------------------
 
@@ -273,6 +279,9 @@ class UvPlaneControl:
             self.controlMtx = None        
             return
 
+        props = context.scene.kitfox_uv_plane_layout_props
+        relocate_origin = props.relocate_origin
+
         bm = None
         
         if obj.mode == 'EDIT':
@@ -332,17 +341,6 @@ class UvPlaneControl:
             uv2.y = -duv1.x
             uv2 += uv0
 
-        #Center UVs on face by subtracting out integer multiples of u, v vectors
-        if True:
-            numU = math.floor(uv0.x + .5)
-            numV = math.floor(uv1.y + .5)
-            
-            offset = mathutils.Vector((numU, numV))
-            
-            uv0 -= offset
-            uv1 -= offset
-            uv2 -= offset
-            
 
         # print("uv0 " + str(uv0))
         # print("uv1 " + str(uv1))
@@ -372,6 +370,18 @@ class UvPlaneControl:
 #        print("mtx P " + str(P))
 
         C = P @ U
+        
+        #Center UVs on face by subtracting out integer multiples of u, v vectors
+        if relocate_origin:
+            CI = C.inverted()
+            
+            bestCenterUv = CI @ bestCenter
+#            bestCenterUvFloor = floor_vector(bestCenterUv + mathutils.Vector((.5, .5, .5)))
+            bestCenterUvFloor = floor_vector(bestCenterUv)
+            
+            C = C @ mathutils.Matrix.Translation(bestCenterUvFloor)
+            
+        
         self.controlMtx = C
 
 #        print("mtx C " + str(C))
