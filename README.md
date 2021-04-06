@@ -9,16 +9,16 @@ A set of tools to make editing UVs easier in Blender.
 Adjust the UVs on your mesh by stroking your model with a brush.
 
 
-##### UV Brush
+#### UV Brush
 Start the UV Brush tool.
 
-##### Radius
+#### Radius
 Radius of brush stroke.  You can also press the **[** and **]** keys to change the radius of the brush.
 
-##### Strength
+#### Strength
 Multiplier for the strength of your brush stroke.
 
-##### Pen Pressure
+#### Pen Pressure
 If checked, the pressure you apply with your stylus will multiply the strength of your brush.
 
 
@@ -33,27 +33,27 @@ Creates a control that allows you to perform a UV planar projection in the viewp
 Click and drag handles to resize, translate or rotate the control.  Hold **shift** when dragging scale handles for uniform scaling.  Hold **control** when rotating to snap rotations to increments of 15 degrees.
 
 
-##### UV Plane Project
+#### UV Plane Project
 Start the plane project tool.
 
-##### Selected Faces Only
+#### Selected Faces Only
 If checked, only faces selected on your mesh will be affected by the control.
 
-##### Step by UVs
+#### Step by UVs
 If checked, when dragging the translation handles of the control, the UV adjustment will be snapped to multiples of the **Step UV Scalar**.
 
-##### Step UV Scalar
+#### Step UV Scalar
 When **Step by UVs** is enabled, specifies the snapping distance in UV space.
 
 
-##### Start Mode
+#### Start Mode
 Defines how the control should be initialized when the **Uv Plane Project** button is pressed.
 
 - **Bounds** - Control aligns to the bounding box of your mesh.
 - **Face** - Control will attempt to match the existing UVs of the active face.
 - **Grid** - Control will match a single grid square.
 
-##### Relocate Origin
+#### Relocate Origin
 When in **Face** mode, origin of UVs will be recalcuated to be near center of the active face.
 
 
@@ -65,10 +65,10 @@ When in **Face** mode, origin of UVs will be recalcuated to be near center of th
 
 Copy UVs to faces that are reflected across an axis.  For every selected face, this tool will check if a mirror image exists of it on the other side of the axis.  If so, the UVs of the selected side are copied to the unselected side.  If both are selected, the positive side of the axis is copied to the negative side.
 
-##### Axis
+#### Axis
 Axis to reflect UVs across.
 
-##### Epsilon
+#### Epsilon
 How close vertices need to be to be considered overlapping.  The reflected face's vertices must be within this tolerance of the source face's vertices.
 
 
@@ -80,16 +80,16 @@ How close vertices need to be to be considered overlapping.  The reflected face'
 
 Perform a cubemap projection based on the grid coorinates.
 
-##### Use Grid Scale
+#### Use Grid Scale
 If true, the current scale factor of the grid will be applied to the projection.  Otherwise the layout will be done with absolute values.
 
-##### Uniform Scale
+#### Uniform Scale
 If true, u and v axes will be scaled uniformly.  Otherwise scaling for each axis can be specified separately.
 
-##### U Scale
+#### U Scale
 Multiplier for U coorinate.
 
-##### V Scale
+#### V Scale
 Multiplier for V coorinate.
 
 
