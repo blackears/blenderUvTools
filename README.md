@@ -2,7 +2,7 @@
 
 A set of tools to make editing UVs easier in Blender.
 
-These tools can be accessed wither through the **Kitfox - UV** panel on the right of the 3D Viewport.  You can also press 'U' while in edit more to bring up a menu listing them.
+These tools can be accessed wither through the **Kitfox - UV** panel on the right of the 3D Viewport.  You can also access them from the uv unwrap menu (press U while in edit mode).
 
 ### UV Brush
 
