@@ -18,7 +18,7 @@ bl_info = {
     "name": "Uv Tools",
     "description": "Tools for editing UVs in the viewport.",
     "author": "Mark McKay",
-    "version": (1, 0, 2),
+    "version": (1, 0, 3),
     "blender": (2, 80, 0),
     "location": "View3D",
 #    "wiki_url": "https://github.com/blackears/uvTools",

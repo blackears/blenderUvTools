@@ -53,6 +53,8 @@ Defines how the control should be initialized when the **Uv Plane Project** butt
 - **Face** - Control will attempt to match the existing UVs of the active face.
 - **Grid** - Control will match a single grid square.
 
+##### Relocate Origin
+When in **Face** mode, origin of UVs will be recalcuated to be near center of the active face.
 
 
 
