@@ -268,10 +268,14 @@ class UvToolsPanel(bpy.types.Panel):
 
 
 def menu_start_uvBrush(self, context):
+    self.layout.operator_context = 'INVOKE_DEFAULT'
     self.layout.operator("kitfox.uv_brush_operator")
+#    bpy.ops.kitfox.uv_plane_layout_op('INVOKE_DEFAULT')
 
 def menu_start_planarProject(self, context):
+    self.layout.operator_context = 'INVOKE_DEFAULT'
     self.layout.operator("kitfox.uv_plane_layout_op")
+#    bpy.ops.kitfox.uv_plane_layout_op('INVOKE_DEFAULT')
 
 def menu_start_copySymmetricUvs(self, context):
     self.layout.operator("kitfox.copy_symmetric_uvs")

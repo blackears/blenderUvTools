@@ -44,11 +44,11 @@ def make(copyToBlenderAddons = False, createArchive = False):
     platSys = platform.system()
     if platSys == 'Windows':
         appData = os.getenv('APPDATA')
-        blenderHome = os.path.join(appData, "Blender Foundation/Blender/2.91")
+        blenderHome = os.path.join(appData, "Blender Foundation/Blender/2.92")
         
     elif platSys == 'Linux':
         home = os.getenv('HOME')
-        blenderHome = os.path.join(home, ".config/blender/2.91/")
+        blenderHome = os.path.join(home, ".config/blender/2.92/")
 
 
     #Create build directory
