@@ -1,5 +1,7 @@
 # UV Tool Suite for Blender
 
+[![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate?hosted_button_id=2FMMA3S9WVGL4)
+
 A set of tools to make editing UVs easier in Blender.
 
 These tools can be accessed wither through the **Kitfox - UV** panel on the right of the 3D Viewport.  You can also access them from the uv unwrap menu (press U while in edit mode).
@@ -122,4 +124,3 @@ A video giving a quick tour of the addon is available here:
 [![Video thumbnail](https://img.youtube.com/vi/bnz31KJJITc/0.jpg)](https://youtu.be/bnz31KJJITc)
 [![Video thumbnail](https://img.youtube.com/vi/hsBdzfSci8k/0.jpg)](https://youtu.be/hsBdzfSci8k)
 
-[![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif)](https://www.paypal.com/donate?hosted_button_id=2FMMA3S9WVGL4)
