@@ -84,22 +84,22 @@ def calc_vertex_transform_world(pos, norm):
     m = mT @ mR
     return m
 
-#Calc matrix that maps from world space to a particular vertex on mesh
-#coord - vertex position in local space
-#normal - vertex normal in local space
-def calc_vertex_transform(obj, coord, normal):
-    pos = obj.matrix_world @ coord
+# #Calc matrix that maps from world space to a particular vertex on mesh
+# #coord - vertex position in local space
+# #normal - vertex normal in local space
+# def calc_vertex_transform(obj, coord, normal):
+    # pos = obj.matrix_world @ coord
 
-    #Transform normal into world space
-    norm = mathutils.Vector((normal.x, normal.y, normal.z, 0))
-    mIT = obj.matrix_world.copy()
-    mIT.invert()
-    mIT.transpose()
-    norm = mIT @ norm
-    norm.resize_3d()
-    norm.normalize()
+    # #Transform normal into world space
+    # norm = mathutils.Vector((normal.x, normal.y, normal.z, 0))
+    # mIT = obj.matrix_world.copy()
+    # mIT.invert()
+    # mIT.transpose()
+    # norm = mIT @ norm
+    # norm.resize_3d()
+    # norm.normalize()
 
-    return calc_vertex_transform_world(pos, norm)
+    # return calc_vertex_transform_world(pos, norm)
 
 def draw_callback(self, context):
 #    if True:
@@ -137,8 +137,6 @@ def draw_callback(self, context):
         
         gpu.matrix.pop()
 
-
-        
 
     bgl.glDisable(bgl.GL_DEPTH_TEST)
 
@@ -357,16 +355,25 @@ class UvBrushToolOperator(bpy.types.Operator):
         if self.edit_object == None:
             hit_object, location, normal, face_index, object, matrix = ray_cast_scene(context, viewlayer, ray_origin, view_vector)
         else:
+            l2w = self.edit_object.matrix_world
+            w2l = l2w.inverted()
+            local_ray_origin = w2l @ ray_origin
+            local_view_vector = mul_vector(w2l, view_vector)
+            
             if self.edit_object.mode == 'OBJECT':
-                hit_object, location, normal, index = self.edit_object.ray_cast(ray_origin, view_vector)
+                hit_object, location, normal, index = self.edit_object.ray_cast(local_ray_origin, local_view_vector)
                 object = self.edit_object
+
+                location = l2w @ location
+                
             if self.edit_object.mode == 'EDIT':
                 bm = bmesh.from_edit_mesh(self.edit_object.data)
                 tree = mathutils.bvhtree.BVHTree.FromBMesh(bm)
-                location, normal, index, distance = tree.ray_cast(ray_origin, view_vector)
+                location, normal, index, distance = tree.ray_cast(local_ray_origin, local_view_vector)
                 hit_object = location != None
                 object = self.edit_object
             
+                location = l2w @ location
             
             
 #        print("hit obj:%s" % (str(hit_object)))
@@ -482,7 +489,6 @@ class UvBrushToolOperator(bpy.types.Operator):
             elif self.edit_object.mode == 'OBJECT':
                 bm.to_mesh(mesh)
                 bm.free()
-                
         
         if hit_object:        
             self.stroke_trail.append(location)
@@ -672,6 +678,8 @@ def register():
 def unregister():
     bpy.utils.unregister_class(UvBrushToolSettings)
     bpy.utils.unregister_class(UvBrushToolOperator)
+    
+    del bpy.types.Scene.uv_brush_props
 
 
 if __name__ == "__main__":
