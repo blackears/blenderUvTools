@@ -90,21 +90,21 @@ class FaceUvsToGridOperator(bpy.types.Operator):
                         
                     uvCenter *= 1.0 / len(face.loops)
 
-                    print ("Uv center " + str(uvCenter))
+#                    print ("Uv center " + str(uvCenter))
                     
                     cell_x = int((uvCenter.x - math.floor(uvCenter.x)) * grid_cells_x)
                     cell_y = int((uvCenter.y - math.floor(uvCenter.y)) * grid_cells_y)
                         
-                    print ("cell_x " + str(cell_x))
-                    print ("cell_y " + str(cell_y))
+#                    print ("cell_x " + str(cell_x))
+#                    print ("cell_y " + str(cell_y))
                     
-                    print ("face.loops[0][uv_layer].uv " + str(face.loops[0][uv_layer].uv))
+#                    print ("face.loops[0][uv_layer].uv " + str(face.loops[0][uv_layer].uv))
                         
                     uvDir = face.loops[0][uv_layer].uv - uvCenter
                     uvDirSign = Vector((-1 if uvDir.x < 0 else 1, -1 if uvDir.y < 0 else 1))
 
-                    print ("uvDir " + str(uvDir))
-                    print ("uvDirSign " + str(uvDirSign))
+#                    print ("uvDir " + str(uvDir))
+#                    print ("uvDirSign " + str(uvDirSign))
                     
                     area = 0
                     for i in range(len(face.loops)):
@@ -123,8 +123,8 @@ class FaceUvsToGridOperator(bpy.types.Operator):
                         
                     for i in range(len(face.loops)):
                         uvPos = mUvXlate @ uvDirSign.to_4d()
-                        print ("- uvDirSign " + str(uvDirSign))
-                        print ("- uvPos " + str(uvPos))
+#                        print ("- uvDirSign " + str(uvDirSign))
+#                        print ("- uvPos " + str(uvPos))
                         
                         face.loops[i][uv_layer].uv = uvPos.to_2d()
 
