@@ -18,7 +18,7 @@ bl_info = {
     "name": "Uv Tools",
     "description": "Tools for editing UVs in the viewport.",
     "author": "Mark McKay",
-    "version": (1, 0, 3),
+    "version": (1, 0, 5),
     "blender": (2, 80, 0),
     "location": "View3D",
 #    "wiki_url": "https://github.com/blackears/uvTools",
@@ -51,6 +51,11 @@ if "bpy" in locals():
     else:
         from .operators import copySymmetricUvs
         
+    if "facesToGrid" in locals():
+        importlib.reload(facesToGrid)
+    else:
+        from .operators import facesToGrid
+        
     if "uvToolsPanel" in locals():
         importlib.reload(uvToolsPanel)
     else:
@@ -62,12 +67,14 @@ else:
     from .operators import copySymmetricUvs
     from .operators import uvLayoutPlane
     from .operators import uvToolsPanel
+    from .operators import facesToGrid
 
 def register():
     uvBrushTool.register()
     triplanarUvUnwrap.register()
     copySymmetricUvs.register()
     uvLayoutPlane.register()
+    facesToGrid.register()
     uvToolsPanel.register()
 
 
@@ -76,5 +83,6 @@ def unregister():
     triplanarUvUnwrap.unregister()
     copySymmetricUvs.unregister()
     uvLayoutPlane.unregister()
+    facesToGrid.unregister()
     uvToolsPanel.unregister()
 
