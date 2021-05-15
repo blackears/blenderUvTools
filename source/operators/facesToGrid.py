@@ -16,6 +16,7 @@
 import bpy
 import bmesh
 import math
+from enum import Enum
 from mathutils import *
 
 class FaceUvsToGridProperties(bpy.types.PropertyGroup):
@@ -28,12 +29,198 @@ class FaceUvsToGridProperties(bpy.types.PropertyGroup):
         name="Grid V", description="Number of cells wide UV grid is along U axis.", default = 1, min=0, soft_max = 4
     )
 
+    winding : bpy.props.EnumProperty(
+        items=(
+            ('KEEP', "Keep", "Keep current winding."),
+            ('CW', "CW", "UVs travel clockwise around face."),
+            ('CCW', "CCW", "UVs travel counter-clockwise around face."),
+        ),
+        default='KEEP'
+    )
+
+
+class ShiftType(Enum):
+    REVERSE = 1
+    CW = 2
+    CCW = 3
 
 def redraw_all_viewports(context):
     for area in bpy.context.screen.areas: # iterate through areas in current screen
         if area.type == 'VIEW_3D':
             area.tag_redraw()
 
+
+    
+
+def shift_face_uvs(context, shift_type):
+    props = context.scene.faces_to_grid_props
+    grid_cells_x = props.grid_cells_x
+    grid_cells_y = props.grid_cells_y
+    winding = props.winding
+
+    for obj in context.selected_objects:
+        if obj.type != 'MESH':
+            continue
+
+    
+        mesh = obj.data
+        if obj.mode == 'EDIT':
+            bm = bmesh.from_edit_mesh(mesh)
+        elif obj.mode == 'OBJECT':
+            bm = bmesh.new()
+            bm.from_mesh(mesh)
+
+
+        uv_layer = bm.loops.layers.uv.verify()
+
+        # adjust uv coordinates
+        coords = []
+        for face in bm.faces:
+            if face.select:
+                for i in range(len(face.loops)):
+                    loop = face.loops[i]
+                    coords.append(loop[uv_layer].uv.copy())
+
+                for i in range(len(face.loops)):
+                    loop = face.loops[i]
+                    if shift_type == ShiftType.CW:
+                        iNext = i + 1 if i < len(face.loops) - 1 else 0
+                    elif shift_type == ShiftType.CCW:
+                        iNext = i - 1 if i > 0 else len(face.loops) - 1
+                    else:
+                        iNext = len(face.loops) - 1 - i
+                        
+                    loop[uv_layer].uv = coords[iNext]
+
+
+        if obj.mode == 'EDIT':
+            bmesh.update_edit_mesh(mesh)
+        elif obj.mode == 'OBJECT':
+            bm.to_mesh(mesh)
+            bm.free()
+        
+    redraw_all_viewports(context)    
+
+#-------------------------------------
+
+class RotUvsCwOperator(bpy.types.Operator):
+    """Rotate face UVs clockwise."""
+    bl_idname = "kitfox.rot_uvs_cw"
+    bl_label = "Rotate Uvs Clockwise"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return obj and obj.type == 'MESH' and (obj.mode == 'EDIT' or obj.mode == 'OBJECT')
+
+
+    def execute(self, context):
+        shift_face_uvs(context, ShiftType.CW)
+        return {'FINISHED'}
+
+#-------------------------------------
+
+class RotUvsCcwOperator(bpy.types.Operator):
+    """Rotate face UVs counter-clockwise."""
+    bl_idname = "kitfox.rot_uvs_ccw"
+    bl_label = "Rotate Uvs Clockwise"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return obj and obj.type == 'MESH' and (obj.mode == 'EDIT' or obj.mode == 'OBJECT')
+
+
+    def execute(self, context):
+        shift_face_uvs(context, ShiftType.CCW)
+        return {'FINISHED'}
+
+#-------------------------------------
+
+class ReverseFaceUvsOperator(bpy.types.Operator):
+    """Reverse winding of face UVs."""
+    bl_idname = "kitfox.reverse_face_uvs"
+    bl_label = "Reverse Face UVs"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return obj and obj.type == 'MESH' and (obj.mode == 'EDIT' or obj.mode == 'OBJECT')
+
+
+    def execute(self, context):
+        shift_face_uvs(context, ShiftType.REVERSE)
+        return {'FINISHED'}
+
+#-------------------------------------
+
+class CopyFaceUvsOperator(bpy.types.Operator):
+    """Set UVs of selected faces to match that of the active face."""
+    bl_idname = "kitfox.copy_face_uvs_unwrap"
+    bl_label = "Copy Face Uvs"
+    bl_options = {'REGISTER', 'UNDO'}
+
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return obj and obj.type == 'MESH' and (obj.mode == 'EDIT' or obj.mode == 'OBJECT')
+#        return obj and obj.type == 'MESH' and obj.mode == 'OBJECT'
+
+
+    def execute(self, context):
+        props = context.scene.faces_to_grid_props
+        grid_cells_x = props.grid_cells_x
+        grid_cells_y = props.grid_cells_y
+        winding = props.winding
+
+#        print("faceToGrid exec")
+
+        for obj in context.selected_objects:
+            if obj.type != 'MESH':
+                continue
+
+        
+            mesh = obj.data
+            if obj.mode == 'EDIT':
+                bm = bmesh.from_edit_mesh(mesh)
+            elif obj.mode == 'OBJECT':
+                bm = bmesh.new()
+                bm.from_mesh(mesh)
+
+
+            uv_layer = bm.loops.layers.uv.verify()
+
+#            print("obj " + obj.name)
+
+            active = bm.faces.active
+            if active == None:
+                continue
+                
+
+            # adjust uv coordinates
+            for face in bm.faces:
+                if face.select and face != active:
+
+                    for i in range(len(face.loops)):
+                        loop = face.loops[i]
+                        activeI = i if i < len(active.loops) else len(active.loops) - 1
+                        
+                        loop[uv_layer].uv = active.loops[activeI][uv_layer].uv.copy()
+
+
+            if obj.mode == 'EDIT':
+                bmesh.update_edit_mesh(mesh)
+            elif obj.mode == 'OBJECT':
+                bm.to_mesh(mesh)
+                bm.free()
+            
+        redraw_all_viewports(context)    
+            
+        return {'FINISHED'}
 
 #-------------------------------------
 
@@ -55,13 +242,14 @@ class FaceUvsToGridOperator(bpy.types.Operator):
         props = context.scene.faces_to_grid_props
         grid_cells_x = props.grid_cells_x
         grid_cells_y = props.grid_cells_y
+        winding = props.winding
+
+#        print("--faceToGrid exec")
 
         for obj in context.selected_objects:
             if obj.type != 'MESH':
                 continue
 
-            l2w = obj.matrix_world
-            
         
             mesh = obj.data
             if obj.mode == 'EDIT':
@@ -72,6 +260,7 @@ class FaceUvsToGridOperator(bpy.types.Operator):
 
             uv_layer = bm.loops.layers.uv.verify()
 
+#            print("obj " + obj.name)
 
             # adjust uv coordinates
             for face in bm.faces:
@@ -86,7 +275,7 @@ class FaceUvsToGridOperator(bpy.types.Operator):
                             uvCenter += Vector(loop[uv_layer].uv)
                             
                     if uvCenter == None:
-                        continue
+                        uvCenter = Vector((0, 0))
                         
                     uvCenter *= 1.0 / len(face.loops)
 
@@ -128,7 +317,8 @@ class FaceUvsToGridOperator(bpy.types.Operator):
                         
                         face.loops[i][uv_layer].uv = uvPos.to_2d()
 
-                        if area >= 0:
+                        ccw = (winding == 'KEEP' and area >= 0) or winding == 'CCW'
+                        if ccw:
                             #CCW
                             tmp = uvDirSign.y
                             uvDirSign.y = uvDirSign.x
@@ -157,8 +347,8 @@ class FaceUvsToGridOperator(bpy.types.Operator):
 
 class FaceUvsToGridPanel(bpy.types.Panel):
 
-    """Properties Panel for Triplanar Unwrap"""
-    bl_label = "Face Uvs to Grid Panel"
+    """Properties Panel for Trim Sheet Tools"""
+    bl_label = "Trim Sheet Tools"
     bl_idname = "OBJECT_PT_kitfox_face_uvs_to_grid"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -182,10 +372,16 @@ class FaceUvsToGridPanel(bpy.types.Panel):
         props = context.scene.faces_to_grid_props
         
         col = layout.column();
-        col.operator("kitfox.face_uvs_to_grid_unwrap", text="Face Uvs to Grid")
+        col.operator("kitfox.face_uvs_to_grid_unwrap")
 
         col.prop(props, "grid_cells_x")
         col.prop(props, "grid_cells_y")
+        col.prop(props, "winding", text = "Winding")
+
+        col.operator("kitfox.copy_face_uvs_unwrap")
+        col.operator("kitfox.rot_uvs_cw", text="Rotate CW")
+        col.operator("kitfox.rot_uvs_ccw", text="Rotate CCW")
+        col.operator("kitfox.reverse_face_uvs", text="Reverse Face Winding")
 
 #-------------------------------------
 
@@ -198,7 +394,14 @@ def menu_start_faceUvsToGrid(self, context):
 def register():
     bpy.utils.register_class(FaceUvsToGridProperties)
     bpy.utils.register_class(FaceUvsToGridOperator)
+    bpy.utils.register_class(CopyFaceUvsOperator)
+    bpy.utils.register_class(RotUvsCwOperator)
+    bpy.utils.register_class(RotUvsCcwOperator)
+    bpy.utils.register_class(ReverseFaceUvsOperator)
+    
     bpy.utils.register_class(FaceUvsToGridPanel)
+
+
     bpy.types.VIEW3D_MT_uv_map.prepend(menu_start_faceUvsToGrid)
 
     bpy.types.Scene.faces_to_grid_props = bpy.props.PointerProperty(type=FaceUvsToGridProperties)
@@ -207,6 +410,10 @@ def register():
 def unregister():
     bpy.utils.unregister_class(FaceUvsToGridProperties)
     bpy.utils.unregister_class(FaceUvsToGridOperator)
+    bpy.utils.unregister_class(CopyFaceUvsOperator)
+    bpy.utils.unregister_class(RotUvsCwOperator)
+    bpy.utils.unregister_class(RotUvsCcwOperator)
+    bpy.utils.unregister_class(ReverseFaceUvsOperator)
     bpy.utils.unregister_class(FaceUvsToGridPanel)
     bpy.types.VIEW3D_MT_uv_map.remove(menu_start_faceUvsToGrid)
     

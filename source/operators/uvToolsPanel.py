@@ -185,7 +185,7 @@ class TriplanarUnwrapPanel(bpy.types.Panel):
         col.prop(settings_tri, "use_grid_scale")
         
         layout.separator()
-        
+
 #---------------------------
 
 class UvToolsPanel(bpy.types.Panel):
@@ -212,59 +212,9 @@ class UvToolsPanel(bpy.types.Panel):
         
         pcoll = preview_collections["main"]
         
-        # #--------------------------------
-        
-        # col = layout.column();
-        # col.operator("kitfox.uv_brush_operator", text="Uv Brush", icon_value = pcoll["uvBrush"].icon_id)
-        
-        # col.prop(settings, "radius")
-        # col.prop(settings, "strength")
-        # col.prop(settings, "use_pressure")
-
-        # #--------------------------------
-        # layout.separator()
-
-        # planeLayout_props = scene.kitfox_uv_plane_layout_props
-
-        # col = layout.column();
-        # col.operator("kitfox.uv_plane_layout_op", text="Uv Plane Project", icon_value = pcoll["uvBrush"].icon_id)
-        # col.prop(planeLayout_props, "selected_faces_only")
-        # col.prop(planeLayout_props, "clamp_to_basis")
-        # col.prop(planeLayout_props, "clamp_scalar")
-        # col.label(text = "Starting Layout:")
-        # col.prop(planeLayout_props, "init_layout", expand = True)
-        
-        # #--------------------------------
-        # layout.separator()
-        # settings_copy_sym = context.scene.kitfox_copy_symmetric_uvs
-        
-        # col = layout.column();
-        # col.operator("kitfox.copy_symmetric_uvs", text="Copy Symmetric UVs")
-
-        # col.prop(settings_copy_sym, "axis")
-        # col.prop(settings_copy_sym, "epsilon")
-        
-        # #--------------------------------
-        # layout.separator()
-        # settings_tri = context.scene.triplanar_settings_props
-        
-        # col = layout.column();
-        # col.operator("kitfox.triplanar_uv_unwrap", text="Triplanar Unwrap")
-
-        # col.prop(settings_tri, "scale_uniform")
-        # row = col.row()
-        # if settings_tri.scale_uniform:
-            # row.prop(settings_tri, "scale_u", text = "Scale")
-        # else:
-            # row.prop(settings_tri, "scale_u")
-            # row.prop(settings_tri, "scale_v")
-            
-        # col.prop(settings_tri, "use_grid_scale")
-        
-        # #--------------------------------
-        # layout.separator()
         col = layout.column();
         col.prop(bpy.context.scene.tool_settings, "use_transform_correct_face_attributes")
+        col.prop(bpy.context.space.data.overlay, "show_face_orientation")
         
 #---------------------------
 
