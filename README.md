@@ -58,7 +58,7 @@ Defines how the control should be initialized when the **Uv Plane Project** butt
 - **Grid** - Control will match a single grid square.
 
 #### Relocate Origin
-When in **Face** mode, origin of UVs will be recalcuated to be near center of the active face.
+When in **Face** mode, origin of UVs will be recalculated to be near center of the active face.
 
 
 
@@ -82,7 +82,7 @@ How close vertices need to be to be considered overlapping.  The reflected face'
 
 ![Triplanar Unwrap](doc/image/triplanarUnwrap.png)
 
-Perform a cubemap projection based on the grid coorinates.
+Perform a cubemap projection based on the grid coordinates.
 
 #### Use Grid Scale
 If true, the current scale factor of the grid will be applied to the projection.  Otherwise the layout will be done with absolute values.
@@ -91,10 +91,10 @@ If true, the current scale factor of the grid will be applied to the projection.
 If true, u and v axes will be scaled uniformly.  Otherwise scaling for each axis can be specified separately.
 
 #### U Scale
-Multiplier for U coorinate.
+Multiplier for U coordinate.
 
 #### V Scale
-Multiplier for V coorinate.
+Multiplier for V coordinate.
 
 
 ### Correct Face Attributes
