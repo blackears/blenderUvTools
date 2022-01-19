@@ -22,11 +22,19 @@ from mathutils import *
 class FaceUvsToGridProperties(bpy.types.PropertyGroup):
     
     grid_cells_x : bpy.props.IntProperty(
-        name="Grid U", description="Number of cells wide UV grid is along U axis.", default = 1, min=0, soft_max = 4
+        name="Grid U", 
+        description="Number of cells wide UV grid is along U axis.", 
+        default = 1, 
+        min=0, 
+        soft_max = 4
     )
 
     grid_cells_y : bpy.props.IntProperty(
-        name="Grid V", description="Number of cells wide UV grid is along U axis.", default = 1, min=0, soft_max = 4
+        name="Grid V", 
+        description="Number of cells wide UV grid is along U axis.", 
+        default = 1, 
+        min=0, 
+        soft_max = 4
     )
 
     winding : bpy.props.EnumProperty(
@@ -36,6 +44,13 @@ class FaceUvsToGridProperties(bpy.types.PropertyGroup):
             ('CCW', "CCW", "UVs travel counter-clockwise around face."),
         ),
         default='KEEP'
+    )
+
+    uv_align_direction : bpy.props.FloatVectorProperty(
+        name="Align Direction", 
+        description="Direction used by Align UVs.", 
+        default = (0, 0, 1), 
+        subtype='DIRECTION'
     )
 
 
@@ -51,6 +66,60 @@ def redraw_all_viewports(context):
 
 
     
+def align_face_uvs(context):
+    props = context.scene.faces_to_grid_props
+    uv_align_direction = props.uv_align_direction.to_3d()
+
+    for obj in context.selected_objects:
+        if obj.type != 'MESH':
+            continue
+
+    
+        mesh = obj.data
+        if obj.mode == 'EDIT':
+            bm = bmesh.from_edit_mesh(mesh)
+        elif obj.mode == 'OBJECT':
+            bm = bmesh.new()
+            bm.from_mesh(mesh)
+
+        uv_layer = bm.loops.layers.uv.verify()
+
+        # adjust uv coordinates
+        for face in bm.faces:
+            if face.select:
+                uvs = []
+                weights = []
+            
+                num_uvs = len(face.loops)
+                for i in range(num_uvs):
+                    loop = face.loops[i]
+                    uvs.append(loop[uv_layer].uv.copy())
+                    weights.append(uv_align_direction.dot(loop.vert.co))
+
+                #Find best weighted sum of Vs for all possible sequences of uvs
+                best_offset = -1
+                best_offset_sum = 0
+                for offset in range(num_uvs):
+                    sum = 0
+                    for i in range(num_uvs):
+                        sum += uvs[(i + offset) % num_uvs].y * weights[i]
+
+                    if best_offset == -1 or sum > best_offset_sum:
+                        best_offset = offset
+                        best_offset_sum = sum
+
+                for i in range(num_uvs):
+                    loop = face.loops[i]
+                    loop[uv_layer].uv = uvs[(i + best_offset) % num_uvs]
+    
+
+        if obj.mode == 'EDIT':
+            bmesh.update_edit_mesh(mesh)
+        elif obj.mode == 'OBJECT':
+            bm.to_mesh(mesh)
+            bm.free()
+        
+    redraw_all_viewports(context)    
 
 def shift_face_uvs(context, shift_type):
     props = context.scene.faces_to_grid_props
@@ -74,23 +143,24 @@ def shift_face_uvs(context, shift_type):
         uv_layer = bm.loops.layers.uv.verify()
 
         # adjust uv coordinates
-        coords = []
         for face in bm.faces:
             if face.select:
-                for i in range(len(face.loops)):
+                uvs = []
+                num_uvs = len(face.loops)
+                for i in range(num_uvs):
                     loop = face.loops[i]
-                    coords.append(loop[uv_layer].uv.copy())
+                    uvs.append(loop[uv_layer].uv.copy())
 
-                for i in range(len(face.loops)):
+                for i in range(num_uvs):
                     loop = face.loops[i]
                     if shift_type == ShiftType.CW:
-                        iNext = i + 1 if i < len(face.loops) - 1 else 0
+                        iNext = i + 1 if i < num_uvs - 1 else 0
                     elif shift_type == ShiftType.CCW:
-                        iNext = i - 1 if i > 0 else len(face.loops) - 1
+                        iNext = i - 1 if i > 0 else num_uvs - 1
                     else:
-                        iNext = len(face.loops) - 1 - i
+                        iNext = num_uvs - 1 - i
                         
-                    loop[uv_layer].uv = coords[iNext]
+                    loop[uv_layer].uv = uvs[iNext]
 
 
         if obj.mode == 'EDIT':
@@ -220,6 +290,24 @@ class CopyFaceUvsOperator(bpy.types.Operator):
             
         redraw_all_viewports(context)    
             
+        return {'FINISHED'}
+
+
+#-------------------------------------
+
+class AlignFaceUvsOperator(bpy.types.Operator):
+    """Rotate UVs so that their V axis is pointing along the Align Direction as much as is possible."""
+    bl_idname = "kitfox.align_face_uvs"
+    bl_label = "Align Face UVs"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return obj and obj.type == 'MESH' and (obj.mode == 'EDIT' or obj.mode == 'OBJECT')
+
+    def execute(self, context):
+        align_face_uvs(context)
         return {'FINISHED'}
 
 #-------------------------------------
@@ -382,7 +470,10 @@ class FaceUvsToGridPanel(bpy.types.Panel):
         col.operator("kitfox.rot_uvs_cw", text="Rotate CW")
         col.operator("kitfox.rot_uvs_ccw", text="Rotate CCW")
         col.operator("kitfox.reverse_face_uvs", text="Reverse Face Winding")
+        col.operator("kitfox.align_face_uvs", text="Align UVs")
 
+        col.prop(props, "uv_align_direction", expand = True)
+        
 #-------------------------------------
 
 
@@ -398,6 +489,7 @@ def register():
     bpy.utils.register_class(RotUvsCwOperator)
     bpy.utils.register_class(RotUvsCcwOperator)
     bpy.utils.register_class(ReverseFaceUvsOperator)
+    bpy.utils.register_class(AlignFaceUvsOperator)
     
     bpy.utils.register_class(FaceUvsToGridPanel)
 
@@ -414,6 +506,7 @@ def unregister():
     bpy.utils.unregister_class(RotUvsCwOperator)
     bpy.utils.unregister_class(RotUvsCcwOperator)
     bpy.utils.unregister_class(ReverseFaceUvsOperator)
+    bpy.utils.unregister_class(AlignFaceUvsOperator)
     bpy.utils.unregister_class(FaceUvsToGridPanel)
     bpy.types.VIEW3D_MT_uv_map.remove(menu_start_faceUvsToGrid)
     

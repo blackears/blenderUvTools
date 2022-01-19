@@ -214,7 +214,6 @@ class UvToolsPanel(bpy.types.Panel):
         
         col = layout.column();
         col.prop(bpy.context.scene.tool_settings, "use_transform_correct_face_attributes")
-        col.prop(bpy.context.space.data.overlay, "show_face_orientation")
         
 #---------------------------
 
