@@ -64,7 +64,7 @@ class UvBrushToolSettings(bpy.types.PropertyGroup):
 #--------------------------------------
 
 
-#Find matrix that will rotate Z axis to point along normal
+#Find matrix that maps onto vertex UV space with Z along normal
 #coord - point in world space
 #normal - normal in world space
 def calc_vertex_transform_world(pos, norm):
@@ -84,22 +84,6 @@ def calc_vertex_transform_world(pos, norm):
     m = mT @ mR
     return m
 
-# #Calc matrix that maps from world space to a particular vertex on mesh
-# #coord - vertex position in local space
-# #normal - vertex normal in local space
-# def calc_vertex_transform(obj, coord, normal):
-    # pos = obj.matrix_world @ coord
-
-    # #Transform normal into world space
-    # norm = mathutils.Vector((normal.x, normal.y, normal.z, 0))
-    # mIT = obj.matrix_world.copy()
-    # mIT.invert()
-    # mIT.transpose()
-    # norm = mIT @ norm
-    # norm.resize_3d()
-    # norm.normalize()
-
-    # return calc_vertex_transform_world(pos, norm)
 
 def draw_callback(self, context):
 #    if True:
@@ -575,6 +559,8 @@ class UvBrushToolOperator(bpy.types.Operator):
             return {'PASS_THROUGH'}
         
         elif event.type == 'MOUSEMOVE':
+            context.window.cursor_set("PAINT_BRUSH")
+        
             self.mouse_move(context, event)
             
             if self.dragging:
@@ -610,6 +596,7 @@ class UvBrushToolOperator(bpy.types.Operator):
             
         elif event.type in {'RET'}:
             if event.value == 'RELEASE':
+                context.window.cursor_set("DEFAULT")
                 bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
                 self.history_clear(context)
                 return {'FINISHED'}
@@ -632,6 +619,7 @@ class UvBrushToolOperator(bpy.types.Operator):
         elif event.type == 'ESC':
             if event.value == 'RELEASE':
                 bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
+                context.window.cursor_set("DEFAULT")
                 self.history_restore_bookmark(context, 0)
                 self.history_clear(context)            
                 return {'CANCELLED'}
@@ -656,6 +644,9 @@ class UvBrushToolOperator(bpy.types.Operator):
             self.history_snapshot(context, 0)
 
             context.window_manager.modal_handler_add(self)
+
+            context.window.cursor_set("PAINT_BRUSH")
+            
             return {'RUNNING_MODAL'}
         else:
             self.report({'WARNING'}, "View3D not found, cannot run operator")

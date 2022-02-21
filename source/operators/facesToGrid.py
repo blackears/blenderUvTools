@@ -87,6 +87,7 @@ def align_face_uvs(context):
         # adjust uv coordinates
         for face in bm.faces:
             if face.select:
+#                print("---face")
                 uvs = []
                 weights = []
             
@@ -104,9 +105,13 @@ def align_face_uvs(context):
                     for i in range(num_uvs):
                         sum += uvs[(i + offset) % num_uvs].y * weights[i]
 
+#                    print("offset " + str(offset) + " sum " + str(sum))
+                    
                     if best_offset == -1 or sum > best_offset_sum:
                         best_offset = offset
                         best_offset_sum = sum
+
+#                print("best_offset " + str(best_offset) + " best_sum " + str(best_offset_sum))
 
                 for i in range(num_uvs):
                     loop = face.loops[i]
