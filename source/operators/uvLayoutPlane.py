@@ -17,7 +17,7 @@
 import bpy
 import bpy.utils.previews
 import os
-import bgl
+#import bgl
 import blf
 import gpu
 import mathutils
@@ -602,7 +602,7 @@ class UvPlaneControl:
 #        print("perspective_matrix I " + str(persp.inverted()))
     
         #---------------------------
-        shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+        shader = gpu.shader.from_builtin('UNIFORM_COLOR')
 #        batchCube = batch_for_shader(shader, 'LINES', {"pos": coordsCube})
         batchCube = batch_for_shader(shader, 'LINE_STRIP', {"pos": coordsSquare_strip})
             
@@ -611,7 +611,7 @@ class UvPlaneControl:
             return
         
         shader.bind();
-        bgl.glEnable(bgl.GL_DEPTH_TEST)
+        #bgl.glEnable(bgl.GL_DEPTH_TEST)
         
         gpu.matrix.push()
         
@@ -621,7 +621,7 @@ class UvPlaneControl:
         
         gpu.matrix.pop()
     
-        bgl.glDisable(bgl.GL_DEPTH_TEST)
+        #bgl.glDisable(bgl.GL_DEPTH_TEST)
         
 #        print("  DRAW HANDLESs")
         for handle in self.handles:

@@ -174,7 +174,7 @@ class HandleBodyCube(HandleBody):
     
         self.coords, normals, uvs = unitCube()
         
-        self.shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+        self.shader = gpu.shader.from_builtin('UNIFORM_COLOR')
         self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": self.coords})
         
         
@@ -185,7 +185,7 @@ class HandleBodySphere(HandleBody):
     
         self.coords, normals, uvs = unitSphere()
         
-        self.shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+        self.shader = gpu.shader.from_builtin('UNIFORM_COLOR')
         self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": self.coords})
 
 
@@ -195,7 +195,7 @@ class HandleBodyCone(HandleBody):
     
         self.coords, normals, uvs = unitCone(cap = True)
         
-        self.shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+        self.shader = gpu.shader.from_builtin('UNIFORM_COLOR')
         self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": self.coords})
 
 
@@ -205,7 +205,7 @@ class HandleBodyTorus(HandleBody):
     
         self.coords, normals, uvs = unitTorus(radius = 8, ring_radius = .3)
         
-        self.shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+        self.shader = gpu.shader.from_builtin('UNIFORM_COLOR')
         self.batchShape = batch_for_shader(self.shader, 'TRIS', {"pos": self.coords})
 
         
