@@ -16,13 +16,12 @@
 import bpy
 import bpy.utils.previews
 import os
-import bgl
+#import bgl
 import blf
 import gpu
 import mathutils
 import math
 import bmesh
-#import pprint
 from .vecmath import *
 from .blenderUtil import *
 
@@ -41,7 +40,7 @@ coordsNormal = [(0, 0, 0), (0, 0, 1)]
 vecZ = mathutils.Vector((0, 0, 1))
 vecX = mathutils.Vector((1, 0, 0))
 
-shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+shader = gpu.shader.from_builtin('UNIFORM_COLOR')
 batchLine = batch_for_shader(shader, 'LINES', {"pos": coordsNormal})
 batchCircle = batch_for_shader(shader, 'LINE_STRIP', {"pos": coordsCircle})
 
@@ -101,7 +100,7 @@ def draw_callback(self, context):
 
     shader.bind();
 
-    bgl.glEnable(bgl.GL_DEPTH_TEST)
+    #bgl.glEnable(bgl.GL_DEPTH_TEST)
 
     #Draw cursor
     if self.show_cursor:
@@ -122,7 +121,7 @@ def draw_callback(self, context):
         gpu.matrix.pop()
 
 
-    bgl.glDisable(bgl.GL_DEPTH_TEST)
+    #bgl.glDisable(bgl.GL_DEPTH_TEST)
 
 class UvTracker:
     def __init__(self, uv, dist, newUv):
