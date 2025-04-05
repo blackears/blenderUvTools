@@ -580,7 +580,8 @@ class HandleRotateAxis(Handle):
             # print("v0 norm %s" % (str(v0)))
             # print("v1 norm %s" % (str(v1)))
 
-            angle = math.acos(v0.dot(v1))
+            clamped_dot = min(1.0, max(-1.0, v0.dot(v1)))
+            angle = math.acos(clamped_dot)
             vc = v0.cross(v1)
             
 #            print("vc %s" % (str(vc)))
