@@ -182,7 +182,8 @@ class UvBrushToolOperator(bpy.types.Operator):
     bl_label = "UV Brush"
     bl_options = {"REGISTER", "UNDO"}
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.dragging = False
         
         self.cursor_pos = None
@@ -198,8 +199,7 @@ class UvBrushToolOperator(bpy.types.Operator):
 #        print("construct UvBrushToolOperator")
 
     def __del__(self):
-#        print("destruct UvBrushToolOperator")
-        pass
+        super().__del__()
         
     def free_snapshot(self, map):
         for obj in map:

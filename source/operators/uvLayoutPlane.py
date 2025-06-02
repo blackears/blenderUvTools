@@ -649,11 +649,14 @@ class UvLayoutPlaneOperator(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
 
-    def __init__(self):
-        #self.mesh_trackers = []
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
         self.control = None
         
 
+    def __del__(self):
+        super().__del__()
 
     def mouse_move(self, context, event):
     

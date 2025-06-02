@@ -48,10 +48,14 @@ class CopySymmetricUvsOperator(bpy.types.Operator):
     bl_label = "Copy Symmetric UVs"
     bl_options = {"REGISTER", "UNDO"}
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         pass
             
 
+    def __del__(self):
+        super().__del__()
+        
     def findLoopMap(self, f0, f1, xform, epsilon):
         #Compare vertex positions
         if len(f0.loops) != len(f1.loops):
