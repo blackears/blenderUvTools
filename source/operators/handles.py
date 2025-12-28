@@ -17,7 +17,7 @@ import bpy
 import mathutils
 import math
 import gpu
-import bgl
+#import bgl
 
 from gpu_extras.batch import batch_for_shader
 from bpy_extras import view3d_utils
