@@ -17,7 +17,6 @@
 import bpy
 import bpy.utils.previews
 import os
-#import bgl
 import blf
 import gpu
 import mathutils

@@ -55,12 +55,12 @@ def make(copyToBlenderAddons = False, createArchive = False):
 
     #Create build directory
     curPath = os.getcwd()
-    if os.path.exists('build'):
-        shutil.rmtree('build')
-    os.mkdir('build')
-    os.mkdir('build/' + projectName)
+    if os.path.exists('build2'):
+        shutil.rmtree('build2')
+    os.mkdir('build2')
+    os.mkdir('build2/' + projectName)
 
-    copytree("source", "build/" + projectName);
+    copytree("source", "build2/" + projectName);
 
     
     #Build addon zip file
@@ -69,7 +69,7 @@ def make(copyToBlenderAddons = False, createArchive = False):
             shutil.rmtree('deploy')
         os.mkdir('deploy')
 
-        shutil.make_archive("deploy/" + projectName, "zip", "build")
+        shutil.make_archive("deploy/" + projectName, "zip", "build2")
 
 
     if copyToBlenderAddons: 
@@ -83,7 +83,7 @@ def make(copyToBlenderAddons = False, createArchive = False):
         print("Copying to blender addons: " + addonPath)
         if os.path.exists(destPath):
             shutil.rmtree(destPath)
-        copytree("build", addonPath);
+        copytree("build2", addonPath);
 
 
 if __name__ == '__main__':

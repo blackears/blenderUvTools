@@ -16,7 +16,6 @@
 import bpy
 import bpy.utils.previews
 import os
-#import bgl
 import blf
 import gpu
 import mathutils
@@ -27,9 +26,6 @@ from .blenderUtil import *
 
 from gpu_extras.batch import batch_for_shader
 from bpy_extras import view3d_utils
-
-
-#preview_collections = {}
 
 
 circleSegs = 64
@@ -100,8 +96,6 @@ def draw_callback(self, context):
 
     shader.bind();
 
-    #bgl.glEnable(bgl.GL_DEPTH_TEST)
-
     #Draw cursor
     if self.show_cursor:
         brush_radius = context.scene.uv_brush_props.radius
@@ -120,8 +114,6 @@ def draw_callback(self, context):
         
         gpu.matrix.pop()
 
-
-    #bgl.glDisable(bgl.GL_DEPTH_TEST)
 
 class UvTracker:
     def __init__(self, uv, dist, newUv):

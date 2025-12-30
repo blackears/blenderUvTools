@@ -2,3 +2,5 @@
 /test/*.blend1
 /deploy
 /__pycache__
+/build2
+/releases
